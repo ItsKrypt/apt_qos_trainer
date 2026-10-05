@@ -42,7 +42,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -102,6 +102,37 @@
     .btn-primary:hover { background: #eab308; }
     .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
     .btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
+    
+    .btn-care {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      padding: 5px 10px;
+      font-size: 0.76rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-care:hover {
+      background: #3b82f6;
+      color: #fff;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text-muted);
+      transition: color 0.15s;
+      padding: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon:hover { color: #fff; }
+    .btn-icon.del:hover { color: #ef4444; }
 
     .scan-card {
       background: var(--card-bg);
@@ -143,7 +174,6 @@
       gap: 6px;
     }
 
-    /* Live Phone Camera Viewport */
     #cameraViewportCard {
       display: none;
       background: #000;
@@ -157,9 +187,7 @@
       padding-bottom: 8px;
     }
 
-    #reader {
-      width: 100%;
-    }
+    #reader { width: 100%; }
 
     .visualizer-card {
       background: var(--card-bg);
@@ -175,6 +203,8 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .vis-title {
@@ -185,17 +215,44 @@
       text-transform: uppercase;
     }
 
+    .totals-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .total-stat-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .total-stat-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .total-attach-val {
       font-size: 2.2rem;
       font-weight: 900;
       color: #fff;
-      text-align: right;
+      line-height: 1.1;
+    }
+
+    .total-sale-val {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--accent-yellow);
+      line-height: 1.1;
     }
 
     .total-attach-sub {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      text-align: right;
+      margin-top: 3px;
     }
 
     .attach-bar-track {
@@ -317,6 +374,15 @@
     td { padding: 12px 18px; border-bottom: 1px solid #283548; font-size: 0.88rem; }
     tr:last-child td { border-bottom: none; }
 
+    tr.extra-care-row {
+      background: rgba(30, 58, 138, 0.18);
+    }
+    tr.extra-care-row td {
+      border-top: 1px dashed rgba(59, 130, 246, 0.4);
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
     .type-tag {
       padding: 3px 8px;
       border-radius: 4px;
@@ -330,10 +396,22 @@
     .tag-works { background: #14532d; color: #dcfce7; }
     .tag-lasts { background: #1e3a8a; color: #dbeafe; }
 
-    .del-btn { background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.1rem; }
-    .del-btn:hover { color: #ef4444; }
+    .actions-cell {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
 
-    /* Modal */
+    .strike-price {
+      text-decoration: line-through;
+      color: #64748b;
+      font-size: 0.78rem;
+      margin-right: 5px;
+      font-weight: normal;
+    }
+
+    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -400,6 +478,47 @@
       border: 1px solid #334155;
       border-radius: 8px;
     }
+
+    /* Price Edit Popup Modal */
+    .edit-modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .slider-track-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #0f172a;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-yellow);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -452,9 +571,21 @@
           <div class="vis-title">Attach Value Distribution</div>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Horizontal Dollar Split Across Attach Classifications</p>
         </div>
-        <div>
-          <div class="total-attach-val" id="totalAttachValue">$0.00</div>
-          <div class="total-attach-sub" id="attachRateText">0.0 Attach Items / Primary</div>
+        
+        <div class="totals-wrapper">
+          <!-- Total Attach Value -->
+          <div class="total-stat-block">
+            <span class="total-stat-label" style="color: #60a5fa;">Attach Total</span>
+            <div class="total-attach-val" id="totalAttachValue">$0.00</div>
+            <div class="total-attach-sub" id="attachRateText">0.0 Attach Items / Primary</div>
+          </div>
+
+          <!-- Total Basket Price & Attach Share -->
+          <div class="total-stat-block">
+            <span class="total-stat-label" style="color: var(--accent-yellow);">Total Basket</span>
+            <div class="total-sale-val" id="totalSaleValue">$0.00</div>
+            <div class="total-attach-sub" id="attachShareOfSale">0% Attach Share</div>
+          </div>
         </div>
       </div>
 
@@ -521,12 +652,53 @@
     </div>
   </div>
 
+  <!-- Price Adjustment Modal -->
+  <div class="modal-overlay" id="priceEditModal">
+    <div class="edit-modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h3 style="font-size: 1rem;">Adjust Item Price</h3>
+          <p id="editItemTitle" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">Item Name</p>
+        </div>
+        <button class="btn-icon" onclick="closePriceEditModal()">✕</button>
+      </div>
+
+      <div>
+        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">PURCHASE PRICE ($ AUD)</label>
+        <input type="number" id="editPriceInput" step="0.01" min="0" class="scan-input" style="font-size: 1.15rem; padding: 8px 12px; width: 100%;" oninput="onManualPriceInput()">
+      </div>
+
+      <div class="slider-track-wrap">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
+          <span style="color: var(--text-muted);">DISCOUNT SLIDER</span>
+          <span id="discountSliderLabel" style="color: var(--accent-yellow);">0% OFF (-$0.00)</span>
+        </div>
+        <input type="range" id="editDiscountSlider" min="0" max="20" step="0.5" value="0" oninput="onDiscountSliderChange()">
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b;">
+          <span>0%</span>
+          <span>5%</span>
+          <span>10%</span>
+          <span>15%</span>
+          <span>20% max</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+        <button class="btn" onclick="resetToCatalogPrice()" style="font-size: 0.78rem; padding: 6px 10px;">↺ Reset to Shelf Price</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" onclick="closePriceEditModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveAdjustedPrice()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Manager Modal with CSV Loader and Dropzone -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
         <h3>Catalog & CSV Importer</h3>
-        <button class="del-btn" onclick="closeCatalogModal()">✕</button>
+        <button class="btn-icon" onclick="closeCatalogModal()">✕</button>
       </div>
       <div class="modal-body">
         <p style="font-size: 0.85rem; color: var(--text-muted);">
@@ -534,7 +706,6 @@
           <code style="color: var(--accent-yellow);">PLU,SKU,Name,Category,Classification,Price</code>
         </p>
 
-        <!-- CSV / JSON Dropzone -->
         <div class="dropzone" onclick="document.getElementById('csvFileInput').click()">
           <p>📄 <strong>Click to Import CSV or JSON Database</strong></p>
           <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Files will automatically append/merge into your existing catalog.</p>
@@ -577,6 +748,7 @@
     let html5QrCodeScanner = null;
     let lastScannedCode = null;
     let lastScanTime = 0;
+    let editingItemId = null;
 
     function init() {
       const stored = localStorage.getItem("jb_attach_catalog_clean");
@@ -622,7 +794,10 @@
           name: item.name,
           category: item.category,
           type: item.type,
-          price: item.price
+          price: item.price,
+          originalPrice: item.price,
+          isExtraCare: false,
+          hasExtraCare: false
         });
         renderBasket();
       } else {
@@ -635,6 +810,148 @@
       processCode(input.value);
       input.value = "";
       input.focus();
+    }
+
+    /* Dynamic Extra Care Attach Logic */
+    function attachExtraCare(targetItemId) {
+      const targetItem = basket.find(item => item.id === targetItemId);
+      if (!targetItem || targetItem.isExtraCare || targetItem.hasExtraCare) return;
+
+      const basePrice = targetItem.price;
+      const isReplaceTier = basePrice <= 1000;
+      const rate = isReplaceTier ? 0.20 : 0.15;
+      const ecPrice = Math.round((basePrice * rate) * 100) / 100;
+      const tierName = isReplaceTier ? "Extra Care Replace (20%)" : "Extra Care Repair (15%)";
+      const pgCode = isReplaceTier ? "PG 1208" : "PG 1233";
+
+      targetItem.hasExtraCare = true;
+
+      const extraCareItem = {
+        id: Date.now() + Math.random(),
+        parentId: targetItem.id,
+        plu: isReplaceTier ? "EC-REPLACE" : "EC-REPAIR",
+        sku: isReplaceTier ? "EC-REPLACE" : "EC-REPAIR",
+        name: `Extra Care Cover (${tierName})`,
+        attachedToName: targetItem.name,
+        category: `Extended Warranty (${pgCode})`,
+        type: "Lasts",
+        price: ecPrice,
+        originalPrice: ecPrice,
+        isExtraCare: true
+      };
+
+      const parentIdx = basket.findIndex(item => item.id === targetItemId);
+      basket.splice(parentIdx + 1, 0, extraCareItem);
+
+      playBeep("Lasts");
+      renderBasket();
+    }
+
+    /* Re-evaluate Extra Care price if parent product is adjusted */
+    function recalculateLinkedExtraCare(parentId, newParentPrice) {
+      const ecItem = basket.find(item => item.isExtraCare && item.parentId === parentId);
+      if (!ecItem) return;
+
+      const isReplaceTier = newParentPrice <= 1000;
+      const rate = isReplaceTier ? 0.20 : 0.15;
+      const newEcPrice = Math.round((newParentPrice * rate) * 100) / 100;
+      const tierName = isReplaceTier ? "Extra Care Replace (20%)" : "Extra Care Repair (15%)";
+      const pgCode = isReplaceTier ? "PG 1208" : "PG 1233";
+
+      ecItem.price = newEcPrice;
+      ecItem.name = `Extra Care Cover (${tierName})`;
+      ecItem.category = `Extended Warranty (${pgCode})`;
+      ecItem.plu = isReplaceTier ? "EC-REPLACE" : "EC-REPAIR";
+      ecItem.sku = isReplaceTier ? "EC-REPLACE" : "EC-REPAIR";
+    }
+
+    /* Price Edit Modal Operations */
+    function openPriceEditModal(itemId) {
+      const item = basket.find(x => x.id === itemId);
+      if (!item) return;
+
+      editingItemId = itemId;
+      document.getElementById("editItemTitle").textContent = `${item.name} (${item.sku})`;
+      document.getElementById("editPriceInput").value = item.price.toFixed(2);
+      
+      const orig = item.originalPrice || item.price;
+      const currentPct = orig > 0 ? Math.max(0, Math.min(20, ((orig - item.price) / orig) * 100)) : 0;
+      
+      const slider = document.getElementById("editDiscountSlider");
+      slider.value = currentPct.toFixed(1);
+      updateSliderLabel(currentPct, orig);
+
+      document.getElementById("priceEditModal").style.display = "flex";
+      document.getElementById("editPriceInput").focus();
+    }
+
+    function closePriceEditModal() {
+      document.getElementById("priceEditModal").style.display = "none";
+      editingItemId = null;
+    }
+
+    function updateSliderLabel(pct, basePrice) {
+      const dollarDiff = basePrice * (pct / 100);
+      document.getElementById("discountSliderLabel").textContent = `${parseFloat(pct).toFixed(1)}% OFF (-$${dollarDiff.toFixed(2)})`;
+    }
+
+    function onDiscountSliderChange() {
+      const item = basket.find(x => x.id === editingItemId);
+      if (!item) return;
+
+      const base = item.originalPrice || item.price;
+      const pct = parseFloat(document.getElementById("editDiscountSlider").value);
+      const discounted = Math.max(0, base * (1 - (pct / 100)));
+      
+      document.getElementById("editPriceInput").value = discounted.toFixed(2);
+      updateSliderLabel(pct, base);
+    }
+
+    function onManualPriceInput() {
+      const item = basket.find(x => x.id === editingItemId);
+      if (!item) return;
+
+      const base = item.originalPrice || item.price;
+      const current = parseFloat(document.getElementById("editPriceInput").value) || 0;
+      
+      if (base > 0 && current <= base) {
+        const pct = Math.min(20, Math.max(0, ((base - current) / base) * 100));
+        document.getElementById("editDiscountSlider").value = pct.toFixed(1);
+        updateSliderLabel(pct, base);
+      } else {
+        document.getElementById("editDiscountSlider").value = 0;
+        document.getElementById("discountSliderLabel").textContent = `Custom Price (Over Shelf)`;
+      }
+    }
+
+    function resetToCatalogPrice() {
+      const item = basket.find(x => x.id === editingItemId);
+      if (!item) return;
+
+      const orig = item.originalPrice || item.price;
+      document.getElementById("editPriceInput").value = orig.toFixed(2);
+      document.getElementById("editDiscountSlider").value = 0;
+      updateSliderLabel(0, orig);
+    }
+
+    function saveAdjustedPrice() {
+      const item = basket.find(x => x.id === editingItemId);
+      if (!item) return;
+
+      const newPrice = parseFloat(document.getElementById("editPriceInput").value);
+      if (isNaN(newPrice) || newPrice < 0) {
+        alert("Please enter a valid price.");
+        return;
+      }
+
+      item.price = Math.round(newPrice * 100) / 100;
+
+      if (item.hasExtraCare) {
+        recalculateLinkedExtraCare(item.id, item.price);
+      }
+
+      closePriceEditModal();
+      renderBasket();
     }
 
     /* Smartphone Camera Scanner Controller */
@@ -695,7 +1012,17 @@
     }
 
     function removeItem(id) {
-      basket = basket.filter(x => x.id !== id);
+      const itemToRemove = basket.find(x => x.id === id);
+      if (!itemToRemove) return;
+
+      if (itemToRemove.isExtraCare) {
+        const parentItem = basket.find(x => x.id === itemToRemove.parentId);
+        if (parentItem) parentItem.hasExtraCare = false;
+        basket = basket.filter(x => x.id !== id);
+      } else {
+        basket = basket.filter(x => x.id !== id && x.parentId !== id);
+      }
+
       renderBasket();
     }
 
@@ -711,10 +1038,13 @@
 
       let primaryCount = 0;
       let attachCount = 0;
+      let totalBasketPrice = 0;
       let looksTotal = 0, worksTotal = 0, lastsTotal = 0;
       let looksItems = 0, worksItems = 0, lastsItems = 0;
 
       basket.forEach(item => {
+        totalBasketPrice += item.price;
+
         if (item.type === "Primary") {
           primaryCount++;
         } else {
@@ -725,21 +1055,69 @@
         }
 
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
-          <td style="font-family: monospace;">${item.sku} <span style="color: #64748b;">(${item.plu})</span></td>
-          <td style="font-weight: 600;">${item.name}</td>
-          <td style="color: var(--text-muted);">${item.category}</td>
-          <td style="font-weight: 700;">$${item.price.toFixed(2)}</td>
-          <td style="text-align: right;"><button class="del-btn" onclick="removeItem(${item.id})">🗑️</button></td>
-        `;
+        const hasDiscount = item.originalPrice && item.price < item.originalPrice;
+        const priceDisplay = hasDiscount 
+          ? `<span class="strike-price">$${item.originalPrice.toFixed(2)}</span>$${item.price.toFixed(2)}`
+          : `$${item.price.toFixed(2)}`;
+
+        if (item.isExtraCare) {
+          tr.className = "extra-care-row";
+          tr.innerHTML = `
+            <td><span class="type-tag tag-lasts">LASTS</span></td>
+            <td style="font-family: monospace; color: #93c5fd;">${item.sku}</td>
+            <td style="font-weight: 600; color: #93c5fd;">
+              <span style="display: inline-block; transform: scale(1.1); margin-right: 4px;">↳ 🛡️</span> 
+              ${item.name}
+              <div style="font-size: 0.76rem; color: #94a3b8; font-weight: normal; margin-left: 18px;">
+                Attached to: <strong style="color: #cbd5e1;">${item.attachedToName}</strong>
+              </div>
+            </td>
+            <td style="color: var(--text-muted);">${item.category}</td>
+            <td style="font-weight: 700; color: #93c5fd;">${priceDisplay}</td>
+            <td style="text-align: right;">
+              <div class="actions-cell">
+                <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Edit Price">✏️</button>
+                <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Extra Care">🗑️</button>
+              </div>
+            </td>
+          `;
+        } else {
+          const careBtnHtml = !item.hasExtraCare && item.price > 0 ? `
+            <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care (${item.price <= 1000 ? '20% Replace' : '15% Repair'})">
+              🛡️ + Extra Care
+            </button>
+          ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 2px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
+
+          tr.innerHTML = `
+            <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
+            <td style="font-family: monospace;">${item.sku} <span style="color: #64748b;">(${item.plu})</span></td>
+            <td style="font-weight: 600;">${item.name}</td>
+            <td style="color: var(--text-muted);">${item.category}</td>
+            <td style="font-weight: 700;">${priceDisplay}</td>
+            <td style="text-align: right;">
+              <div class="actions-cell">
+                ${careBtnHtml}
+                <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Adjust Price / Discount">✏️️</button>
+                <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Item">🗑️</button>
+              </div>
+            </td>
+          `;
+        }
         tbody.appendChild(tr);
       });
 
       const totalAttachDollars = looksTotal + worksTotal + lastsTotal;
+      
+      // Update Top Metrics
       document.getElementById("totalAttachValue").textContent = `$${totalAttachDollars.toFixed(2)}`;
+      document.getElementById("totalSaleValue").textContent = `$${totalBasketPrice.toFixed(2)}`;
+
       const attachRate = primaryCount > 0 ? (attachCount / primaryCount).toFixed(1) : "0.0";
       document.getElementById("attachRateText").textContent = `${attachRate} Attach Items / Primary (${primaryCount} primary)`;
+
+      const attachSharePct = totalBasketPrice > 0 ? Math.round((totalAttachDollars / totalBasketPrice) * 100) : 0;
+      document.getElementById("attachShareOfSale").textContent = `${attachSharePct}% of Total Sale is Attach`;
+
       document.getElementById("itemSummaryCount").textContent = `${basket.length} items total`;
 
       document.getElementById("looksAmt").textContent = `$${looksTotal.toFixed(2)}`;
@@ -784,7 +1162,7 @@
 
       const coach = document.getElementById("coachFeedback");
       if (primaryCount > 0 && attachCount === 0) {
-        coach.innerHTML = "⚠️ <strong style='color:#f87171;'>Warning: Naked Sale!</strong> Handset or TV sold without accessories or care.";
+        coach.innerHTML = "⚠️ <strong style='color:#f87171;'>Warning: Naked Sale!</strong> Handset or hardware sold without accessories or care.";
       } else if (primaryCount > 0 && (looksItems === 0 || worksItems === 0 || lastsItems === 0)) {
         coach.innerHTML = "🟡 <strong>Sale in progress:</strong> Keep balancing the ticket across Looks, Works, and Lasts.";
       } else if (primaryCount > 0 && looksItems > 0 && worksItems > 0 && lastsItems > 0) {
@@ -908,7 +1286,6 @@
       }
     }
 
-    /* Save master database to USB as a portable JSON file */
     function exportCatalogFile() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalog, null, 2));
       const downloadAnchor = document.createElement('a');
