@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quality of Sale (QoS) Attach Visualizer</title>
+  <!-- Universal barcode reader engine for mobile & desktop cameras -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent-yellow: #facc15;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --color-primary: #a855f7;
+      --color-looks: #ef4444;   /* Red */
+      --color-works: #22c55e;   /* Green */
+      --color-lasts: #3b82f6;   /* Blue */
+      
+      --color-looks-bg: rgba(239, 68, 68, 0.15);
+      --color-works-bg: rgba(34, 197, 94, 0.15);
+      --color-lasts-bg: rgba(59, 130, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 18px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .badge-jb {
+      background: var(--accent-yellow);
+      color: #000;
+      font-weight: 900;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #334155;
+      color: #fff;
+      border: 1px solid #475569;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover { background: #475569; }
+    .btn-primary { background: var(--accent-yellow); color: #000; border: none; font-weight: 700; }
+    .btn-primary:hover { background: #eab308; }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
+
+    .scan-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #475569;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .scan-input-wrapper {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .scan-input {
+      flex: 1;
+      min-width: 220px;
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.25rem;
+      padding: 12px 16px;
+      font-family: monospace;
+      outline: none;
+    }
+
+    .scan-input:focus { border-color: var(--accent-yellow); }
+
+    .scan-hint {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* Live Phone Camera Viewport */
+    #cameraViewportCard {
+      display: none;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid var(--accent-yellow);
+      max-width: 480px;
+      margin: 10px auto 0 auto;
+      width: 100%;
+      text-align: center;
+      padding-bottom: 8px;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .visualizer-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .vis-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .vis-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .total-attach-val {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #fff;
+      text-align: right;
+    }
+
+    .total-attach-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .attach-bar-track {
+      width: 100%;
+      height: 46px;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+      border: 1px solid #334155;
+    }
+
+    .bar-segment {
+      height: 100%;
+      transition: width 0.35s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.88rem;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .bar-looks { background-color: var(--color-looks); }
+    .bar-works { background-color: var(--color-works); }
+    .bar-lasts { background-color: var(--color-lasts); }
+
+    .empty-bar-msg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .metric-card {
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 5px solid transparent;
+    }
+
+    .metric-looks { background: var(--color-looks-bg); border-left-color: var(--color-looks); }
+    .metric-works { background: var(--color-works-bg); border-left-color: var(--color-works); }
+    .metric-lasts { background: var(--color-lasts-bg); border-left-color: var(--color-lasts); }
+
+    .metric-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .metric-amt { font-size: 1.7rem; font-weight: 800; }
+    .metric-items { font-size: 0.8rem; color: var(--text-muted); }
+
+    .coach-box {
+      background: #111e38;
+      border: 1px solid #1e3a8a;
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+
+    .coach-badge {
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .ledger-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      overflow-x: auto;
+    }
+
+    .ledger-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th {
+      background: #182234;
+      padding: 12px 18px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    td { padding: 12px 18px; border-bottom: 1px solid #283548; font-size: 0.88rem; }
+    tr:last-child td { border-bottom: none; }
+
+    .type-tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+    .tag-primary { background: #581c87; color: #f3e8ff; }
+    .tag-looks { background: #7f1d1d; color: #fee2e2; }
+    .tag-works { background: #14532d; color: #dcfce7; }
+    .tag-lasts { background: #1e3a8a; color: #dbeafe; }
+
+    .del-btn { background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.1rem; }
+    .del-btn:hover { color: #ef4444; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 850px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .dropzone {
+      border: 2px dashed #475569;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .dropzone:hover { border-color: var(--accent-yellow); background: #182234; }
+
+    textarea.csv-paste {
+      width: 100%;
+      height: 100px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      color: #fff;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .catalog-list {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #334155;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="brand-title">
+        <span class="badge-jb">JB HI-FI</span>
+        <div>
+          <h2>Quality of Sale (QoS) Attach Visualizer</h2>
+          <p style="color: var(--text-muted); font-size: 0.82rem;">Training Terminal & Barcode Scanner</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" onclick="openCatalogModal()">📁 Catalog & CSV Manager</button>
+        <button class="btn" onclick="exportCatalogFile()">💾 Export Database to USB</button>
+        <button class="btn btn-danger" onclick="clearBasket()">🗑️ Reset Basket</button>
+      </div>
+    </header>
+
+    <div class="scan-card">
+      <div class="scan-input-wrapper">
+        <input 
+          type="text" 
+          id="scannerInput" 
+          class="scan-input" 
+          placeholder="Scan barcode (PLU) or type SKU..." 
+          autocomplete="off" 
+          autofocus
+        >
+        <button class="btn btn-primary" onclick="handleScanSubmit()">Scan / Add</button>
+        <button class="btn" id="cameraToggleBtn" onclick="toggleCameraScanner()" style="border-color: var(--accent-yellow);">📷 Open Camera Scanner</button>
+      </div>
+
+      <!-- Live Video Viewfinder -->
+      <div id="cameraViewportCard">
+        <div id="reader"></div>
+        <button class="btn btn-danger" onclick="stopCameraScanner()" style="margin-top: 8px;">✕ Close Camera</button>
+      </div>
+
+      <div class="scan-hint">
+        <span>Ready for barcode scanner input (HID USB/Bluetooth) or phone camera.</span>
+        <span id="catalogCountDisplay" style="color: var(--accent-yellow); font-weight: 600;">Catalog: 0 items loaded</span>
+      </div>
+    </div>
+
+    <div class="visualizer-card">
+      <div class="vis-header">
+        <div>
+          <div class="vis-title">Attach Value Distribution</div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Horizontal Dollar Split Across Attach Classifications</p>
+        </div>
+        <div>
+          <div class="total-attach-val" id="totalAttachValue">$0.00</div>
+          <div class="total-attach-sub" id="attachRateText">0.0 Attach Items / Primary</div>
+        </div>
+      </div>
+
+      <div class="attach-bar-track">
+        <div class="empty-bar-msg" id="emptyBarMsg">No Attach Items in Basket</div>
+        <div class="bar-segment bar-looks" id="barSegmentLooks" style="width: 0%;"></div>
+        <div class="bar-segment bar-works" id="barSegmentWorks" style="width: 0%;"></div>
+        <div class="bar-segment bar-lasts" id="barSegmentLasts" style="width: 0%;"></div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-card metric-looks">
+          <div class="metric-title" style="color: var(--color-looks);">
+            <span>🟥 LOOKS</span>
+            <span id="looksShare">0%</span>
+          </div>
+          <div class="metric-amt" id="looksAmt">$0.00</div>
+          <div class="metric-items" id="looksItemsCount">0 items (Cases, Bands)</div>
+        </div>
+
+        <div class="metric-card metric-works">
+          <div class="metric-title" style="color: var(--color-works);">
+            <span>🟩 WORKS</span>
+            <span id="worksShare">0%</span>
+          </div>
+          <div class="metric-amt" id="worksAmt">$0.00</div>
+          <div class="metric-items" id="worksItemsCount">0 items (Chargers, Cables, Soundbars)</div>
+        </div>
+
+        <div class="metric-card metric-lasts">
+          <div class="metric-title" style="color: var(--color-lasts);">
+            <span>🟦 LASTS</span>
+            <span id="lastsShare">0%</span>
+          </div>
+          <div class="metric-amt" id="lastsAmt">$0.00</div>
+          <div class="metric-items" id="lastsItemsCount">0 items (Screen Guards, Extra Care)</div>
+        </div>
+      </div>
+
+      <div class="coach-box">
+        <span class="coach-badge">QoS Coach</span>
+        <div id="coachFeedback">Catalog ready. Scan items to begin coaching simulation.</div>
+      </div>
+    </div>
+
+    <div class="ledger-card">
+      <div class="ledger-header">
+        <h3 style="font-size: 1rem;">Current Basket</h3>
+        <span id="itemSummaryCount" style="color: var(--text-muted); font-size: 0.85rem;">0 items total</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>SKU / PLU</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="basketTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Manager Modal with CSV Loader and Dropzone -->
+  <div class="modal-overlay" id="catalogModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Catalog & CSV Importer</h3>
+        <button class="del-btn" onclick="closeCatalogModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Import any CSV from your browser scraper or store reports. Expected columns:<br>
+          <code style="color: var(--accent-yellow);">PLU,SKU,Name,Category,Classification,Price</code>
+        </p>
+
+        <!-- CSV / JSON Dropzone -->
+        <div class="dropzone" onclick="document.getElementById('csvFileInput').click()">
+          <p>📄 <strong>Click to Import CSV or JSON Database</strong></p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Files will automatically append/merge into your existing catalog.</p>
+          <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleFileUpload(event)">
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">PASTE CSV ROWS MANUALLY</label>
+          <textarea id="pasteArea" class="csv-paste" placeholder="Paste CSV rows here..."></textarea>
+          <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn btn-danger" onclick="wipeCatalog()">⚠️ Clear Entire Catalog</button>
+            <button class="btn btn-primary" onclick="importPastedCSV()">Append Pasted Lines</button>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 0.9rem; margin-bottom: 8px;">Active Products in Database (<span id="modalCatalogCount">0</span>)</h4>
+          <div class="catalog-list">
+            <table>
+              <thead>
+                <tr>
+                  <th>PLU (Barcode)</th>
+                  <th>SKU</th>
+                  <th>Description</th>
+                  <th>Attach Type</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody id="catalogTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let catalog = {};
+    let basket = [];
+    let html5QrCodeScanner = null;
+    let lastScannedCode = null;
+    let lastScanTime = 0;
+
+    function init() {
+      const stored = localStorage.getItem("jb_attach_catalog_clean");
+      if (stored) {
+        try { catalog = JSON.parse(stored); } catch (e) { catalog = {}; }
+      }
+      updateCatalogCountDisplay();
+      renderBasket();
+
+      document.getElementById("scannerInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") handleScanSubmit();
+      });
+    }
+
+    function updateCatalogCountDisplay() {
+      const count = Object.keys(catalog).length;
+      document.getElementById("catalogCountDisplay").textContent = `Catalog: ${count} active items loaded`;
+      document.getElementById("modalCatalogCount").textContent = count;
+    }
+
+    /* Core Product Processing */
+    function processCode(val) {
+      if (!val) return;
+      val = val.trim();
+
+      let item = catalog[val];
+      if (!item) {
+        const foundPlu = Object.keys(catalog).find(k => catalog[k].sku.toLowerCase() === val.toLowerCase());
+        if (foundPlu) {
+          item = catalog[foundPlu];
+          item._scannedPlu = foundPlu;
+        }
+      } else {
+        item._scannedPlu = val;
+      }
+
+      if (item) {
+        playBeep(item.type);
+        basket.push({
+          id: Date.now() + Math.random(),
+          plu: item._scannedPlu || val,
+          sku: item.sku,
+          name: item.name,
+          category: item.category,
+          type: item.type,
+          price: item.price
+        });
+        renderBasket();
+      } else {
+        alert(`Barcode / PLU [${val}] not found in database. Import it via the Catalog Manager!`);
+      }
+    }
+
+    function handleScanSubmit() {
+      const input = document.getElementById("scannerInput");
+      processCode(input.value);
+      input.value = "";
+      input.focus();
+    }
+
+    /* Smartphone Camera Scanner Controller */
+    function toggleCameraScanner() {
+      const card = document.getElementById("cameraViewportCard");
+      if (card.style.display === "block") {
+        stopCameraScanner();
+      } else {
+        startCameraScanner();
+      }
+    }
+
+    function startCameraScanner() {
+      const card = document.getElementById("cameraViewportCard");
+      card.style.display = "block";
+
+      html5QrCodeScanner = new Html5Qrcode("reader");
+      const config = {
+        fps: 15,
+        qrbox: { width: 280, height: 140 },
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.CODE_128
+        ]
+      };
+
+      html5QrCodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          const now = Date.now();
+          if (decodedText === lastScannedCode && now - lastScanTime < 2500) {
+            return;
+          }
+          lastScannedCode = decodedText;
+          lastScanTime = now;
+          processCode(decodedText);
+        },
+        () => {}
+      ).catch(err => {
+        alert("Camera could not start. Ensure camera permissions are granted and the page is loaded over HTTPS.");
+        stopCameraScanner();
+      });
+    }
+
+    function stopCameraScanner() {
+      if (html5QrCodeScanner) {
+        html5QrCodeScanner.stop().then(() => {
+          html5QrCodeScanner.clear();
+          document.getElementById("cameraViewportCard").style.display = "none";
+        }).catch(() => {
+          document.getElementById("cameraViewportCard").style.display = "none";
+        });
+      } else {
+        document.getElementById("cameraViewportCard").style.display = "none";
+      }
+    }
+
+    function removeItem(id) {
+      basket = basket.filter(x => x.id !== id);
+      renderBasket();
+    }
+
+    function clearBasket() {
+      basket = [];
+      renderBasket();
+      document.getElementById("scannerInput").focus();
+    }
+
+    function renderBasket() {
+      const tbody = document.getElementById("basketTableBody");
+      tbody.innerHTML = "";
+
+      let primaryCount = 0;
+      let attachCount = 0;
+      let looksTotal = 0, worksTotal = 0, lastsTotal = 0;
+      let looksItems = 0, worksItems = 0, lastsItems = 0;
+
+      basket.forEach(item => {
+        if (item.type === "Primary") {
+          primaryCount++;
+        } else {
+          attachCount++;
+          if (item.type === "Looks") { looksTotal += item.price; looksItems++; }
+          if (item.type === "Works") { worksTotal += item.price; worksItems++; }
+          if (item.type === "Lasts") { lastsTotal += item.price; lastsItems++; }
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
+          <td style="font-family: monospace;">${item.sku} <span style="color: #64748b;">(${item.plu})</span></td>
+          <td style="font-weight: 600;">${item.name}</td>
+          <td style="color: var(--text-muted);">${item.category}</td>
+          <td style="font-weight: 700;">$${item.price.toFixed(2)}</td>
+          <td style="text-align: right;"><button class="del-btn" onclick="removeItem(${item.id})">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalAttachDollars = looksTotal + worksTotal + lastsTotal;
+      document.getElementById("totalAttachValue").textContent = `$${totalAttachDollars.toFixed(2)}`;
+      const attachRate = primaryCount > 0 ? (attachCount / primaryCount).toFixed(1) : "0.0";
+      document.getElementById("attachRateText").textContent = `${attachRate} Attach Items / Primary (${primaryCount} primary)`;
+      document.getElementById("itemSummaryCount").textContent = `${basket.length} items total`;
+
+      document.getElementById("looksAmt").textContent = `$${looksTotal.toFixed(2)}`;
+      document.getElementById("worksAmt").textContent = `$${worksTotal.toFixed(2)}`;
+      document.getElementById("lastsAmt").textContent = `$${lastsTotal.toFixed(2)}`;
+
+      document.getElementById("looksItemsCount").textContent = `${looksItems} items (Looks)`;
+      document.getElementById("worksItemsCount").textContent = `${worksItems} items (Works)`;
+      document.getElementById("lastsItemsCount").textContent = `${lastsItems} items (Lasts)`;
+
+      const segLooks = document.getElementById("barSegmentLooks");
+      const segWorks = document.getElementById("barSegmentWorks");
+      const segLasts = document.getElementById("barSegmentLasts");
+      const emptyMsg = document.getElementById("emptyBarMsg");
+
+      if (totalAttachDollars > 0) {
+        emptyMsg.style.display = "none";
+        const lPct = (looksTotal / totalAttachDollars) * 100;
+        const wPct = (worksTotal / totalAttachDollars) * 100;
+        const ltPct = (lastsTotal / totalAttachDollars) * 100;
+
+        segLooks.style.width = lPct + "%";
+        segWorks.style.width = wPct + "%";
+        segLasts.style.width = ltPct + "%";
+
+        segLooks.textContent = lPct > 8 ? `$${looksTotal.toFixed(0)}` : "";
+        segWorks.textContent = wPct > 8 ? `$${worksTotal.toFixed(0)}` : "";
+        segLasts.textContent = ltPct > 8 ? `$${lastsTotal.toFixed(0)}` : "";
+
+        document.getElementById("looksShare").textContent = `${lPct.toFixed(0)}%`;
+        document.getElementById("worksShare").textContent = `${wPct.toFixed(0)}%`;
+        document.getElementById("lastsShare").textContent = `${ltPct.toFixed(0)}%`;
+      } else {
+        emptyMsg.style.display = "flex";
+        segLooks.style.width = "0%";
+        segWorks.style.width = "0%";
+        segLasts.style.width = "0%";
+        document.getElementById("looksShare").textContent = "0%";
+        document.getElementById("worksShare").textContent = "0%";
+        document.getElementById("lastsShare").textContent = "0%";
+      }
+
+      const coach = document.getElementById("coachFeedback");
+      if (primaryCount > 0 && attachCount === 0) {
+        coach.innerHTML = "⚠️ <strong style='color:#f87171;'>Warning: Naked Sale!</strong> Handset or TV sold without accessories or care.";
+      } else if (primaryCount > 0 && (looksItems === 0 || worksItems === 0 || lastsItems === 0)) {
+        coach.innerHTML = "🟡 <strong>Sale in progress:</strong> Keep balancing the ticket across Looks, Works, and Lasts.";
+      } else if (primaryCount > 0 && looksItems > 0 && worksItems > 0 && lastsItems > 0) {
+        coach.innerHTML = "🌟 <strong style='color:#4ade80;'>Elite 3-Pillar Attach:</strong> Full Looks, Works, and Lasts coverage achieved!";
+      } else if (basket.length === 0) {
+        coach.textContent = "Catalog ready. Scan items to begin coaching simulation.";
+      }
+    }
+
+    function playBeep(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(type === "Primary" ? 440 : (type === "Lasts" ? 780 : (type === "Works" ? 620 : 520)), ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+      } catch (e) {}
+    }
+
+    function openCatalogModal() {
+      document.getElementById("catalogModal").style.display = "flex";
+      renderCatalogTable();
+    }
+
+    function closeCatalogModal() {
+      document.getElementById("catalogModal").style.display = "none";
+      document.getElementById("scannerInput").focus();
+    }
+
+    function renderCatalogTable() {
+      const tbody = document.getElementById("catalogTableBody");
+      tbody.innerHTML = "";
+      Object.keys(catalog).forEach(plu => {
+        const item = catalog[plu];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-family: monospace;">${plu}</td>
+          <td style="font-family: monospace;">${item.sku}</td>
+          <td>${item.name}</td>
+          <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
+          <td>$${item.price.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      updateCatalogCountDisplay();
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        if (file.name.endsWith(".json")) {
+          try {
+            const data = JSON.parse(content);
+            catalog = { ...catalog, ...data };
+            saveCatalog();
+            alert("Database merged successfully from JSON file!");
+          } catch(err) { alert("Invalid JSON file."); }
+        } else {
+          parseCSVLines(content);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function importPastedCSV() {
+      const text = document.getElementById("pasteArea").value;
+      if (!text.trim()) return;
+      parseCSVLines(text);
+      document.getElementById("pasteArea").value = "";
+    }
+
+    function parseCSVLines(csvText) {
+      const lines = csvText.split(/\r?\n/);
+      let count = 0;
+
+      lines.forEach(line => {
+        if (!line.trim() || line.toLowerCase().startsWith("plu")) return;
+        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ''));
+        if (cols.length >= 6) {
+          const [plu, sku, name, category, rawType, priceStr] = cols;
+          let type = "Primary";
+          const lower = rawType.toLowerCase();
+          if (lower.includes("look")) type = "Looks";
+          else if (lower.includes("work")) type = "Works";
+          else if (lower.includes("last")) type = "Lasts";
+
+          catalog[plu] = {
+            sku: sku || plu,
+            name: name,
+            category: category,
+            type: type,
+            price: parseFloat(priceStr) || 0.00
+          };
+          count++;
+        }
+      });
+
+      saveCatalog();
+      alert(`Import complete! Added/merged ${count} products.`);
+    }
+
+    function saveCatalog() {
+      localStorage.setItem("jb_attach_catalog_clean", JSON.stringify(catalog));
+      renderCatalogTable();
+      updateCatalogCountDisplay();
+    }
+
+    function wipeCatalog() {
+      if (confirm("Are you sure you want to clear all products from the catalog?")) {
+        catalog = {};
+        saveCatalog();
+      }
+    }
+
+    /* Save master database to USB as a portable JSON file */
+    function exportCatalogFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalog, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "master_catalog.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
