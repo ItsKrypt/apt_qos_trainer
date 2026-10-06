@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quality of Sale (QoS) Attach Visualizer</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#facc15">
-  <!-- Universal barcode reader engine for mobile & desktop cameras -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
-      --bg-dark: #0f172a;
+      --bg-dark: #0b1120;
       --card-bg: #1e293b;
       --card-border: #334155;
       --accent-yellow: #facc15;
@@ -18,9 +17,9 @@
       --text-muted: #94a3b8;
       
       --color-primary: #a855f7;
-      --color-looks: #ef4444;   /* Red */
-      --color-works: #22c55e;   /* Green */
-      --color-lasts: #3b82f6;   /* Blue */
+      --color-looks: #ef4444;
+      --color-works: #22c55e;
+      --color-lasts: #3b82f6;
       
       --color-looks-bg: rgba(239, 68, 68, 0.15);
       --color-works-bg: rgba(34, 197, 94, 0.15);
@@ -31,22 +30,26 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg-dark);
       color: var(--text-main);
-      padding: 24px;
+      padding: 16px;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .container {
       max-width: 1240px;
+      width: 100%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     header {
@@ -54,7 +57,7 @@
       justify-content: space-between;
       align-items: center;
       background: var(--card-bg);
-      padding: 18px 24px;
+      padding: 14px 18px;
       border-radius: 12px;
       border: 1px solid var(--card-border);
       flex-wrap: wrap;
@@ -64,7 +67,7 @@
     .brand-title {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
     .badge-jb {
@@ -73,12 +76,13 @@
       font-weight: 900;
       padding: 6px 12px;
       border-radius: 6px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      letter-spacing: -0.5px;
     }
 
     .header-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -86,57 +90,38 @@
       background: #334155;
       color: #fff;
       border: 1px solid #475569;
-      padding: 9px 16px;
+      padding: 10px 14px;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      transition: all 0.2s;
+      min-height: 44px;
+      transition: background 0.15s, transform 0.05s;
     }
-
-    .btn:hover { background: #475569; }
-    .btn-primary { background: var(--accent-yellow); color: #000; border: none; font-weight: 700; }
-    .btn-primary:hover { background: #eab308; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent-yellow); color: #000; border: none; font-weight: 800; }
     .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
-    .btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
-    
+
     .btn-care {
       background: rgba(59, 130, 246, 0.2);
       color: #93c5fd;
       border: 1px solid #3b82f6;
-      padding: 5px 10px;
-      font-size: 0.76rem;
+      padding: 6px 10px;
+      font-size: 0.78rem;
       border-radius: 6px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
+      min-height: 38px;
     }
-    .btn-care:hover {
-      background: #3b82f6;
-      color: #fff;
-    }
-
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      color: var(--text-muted);
-      transition: color 0.15s;
-      padding: 4px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-icon:hover { color: #fff; }
-    .btn-icon.del:hover { color: #ef4444; }
+    .btn-care:hover { background: #3b82f6; color: #fff; }
 
     .scan-card {
       background: var(--card-bg);
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
       border: 2px solid #475569;
       display: flex;
@@ -146,32 +131,36 @@
 
     .scan-input-wrapper {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .scan-input {
       flex: 1;
-      min-width: 220px;
+      min-width: 180px;
       background: #0f172a;
       border: 2px solid #334155;
       border-radius: 8px;
       color: #fff;
-      font-size: 1.25rem;
-      padding: 12px 16px;
+      font-size: 1.15rem;
+      padding: 10px 14px;
       font-family: monospace;
       outline: none;
+      min-height: 46px;
     }
-
     .scan-input:focus { border-color: var(--accent-yellow); }
 
-    .scan-hint {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      display: flex;
+    #toastBanner {
+      display: none;
+      background: #14532d;
+      color: #dcfce7;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 6px;
+      border: 1px solid #22c55e;
     }
 
     #cameraViewportCard {
@@ -181,22 +170,21 @@
       overflow: hidden;
       border: 2px solid var(--accent-yellow);
       max-width: 480px;
-      margin: 10px auto 0 auto;
+      margin: 6px auto 0 auto;
       width: 100%;
       text-align: center;
       padding-bottom: 8px;
     }
-
     #reader { width: 100%; }
 
     .visualizer-card {
       background: var(--card-bg);
       border-radius: 12px;
       border: 1px solid var(--card-border);
-      padding: 24px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 14px;
     }
 
     .vis-header {
@@ -204,22 +192,13 @@
       justify-content: space-between;
       align-items: flex-end;
       flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .vis-title {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      text-transform: uppercase;
+      gap: 12px;
     }
 
     .totals-wrapper {
       display: flex;
       align-items: flex-end;
-      gap: 24px;
-      flex-wrap: wrap;
+      gap: 20px;
     }
 
     .total-stat-block {
@@ -229,35 +208,35 @@
     }
 
     .total-stat-label {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .total-attach-val {
-      font-size: 2.2rem;
+      font-size: 1.9rem;
       font-weight: 900;
       color: #fff;
       line-height: 1.1;
     }
 
     .total-sale-val {
-      font-size: 2.2rem;
+      font-size: 1.9rem;
       font-weight: 900;
       color: var(--accent-yellow);
       line-height: 1.1;
     }
 
     .total-attach-sub {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     .attach-bar-track {
       width: 100%;
-      height: 46px;
+      height: 42px;
       background: #0f172a;
       border-radius: 8px;
       overflow: hidden;
@@ -268,17 +247,16 @@
 
     .bar-segment {
       height: 100%;
-      transition: width 0.35s ease;
+      transition: width 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
       font-weight: 800;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       overflow: hidden;
       white-space: nowrap;
     }
-
     .bar-looks { background-color: var(--color-looks); }
     .bar-works { background-color: var(--color-works); }
     .bar-lasts { background-color: var(--color-lasts); }
@@ -292,59 +270,56 @@
       justify-content: center;
       color: #64748b;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 10px;
     }
 
     .metric-card {
-      padding: 16px;
+      padding: 12px 14px;
       border-radius: 8px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      border-left: 5px solid transparent;
+      gap: 2px;
+      border-left: 4px solid transparent;
     }
-
     .metric-looks { background: var(--color-looks-bg); border-left-color: var(--color-looks); }
     .metric-works { background: var(--color-works-bg); border-left-color: var(--color-works); }
     .metric-lasts { background: var(--color-lasts-bg); border-left-color: var(--color-lasts); }
 
     .metric-title {
-      font-size: 0.82rem;
+      font-size: 0.74rem;
       font-weight: 800;
       text-transform: uppercase;
       display: flex;
       justify-content: space-between;
     }
-
-    .metric-amt { font-size: 1.7rem; font-weight: 800; }
-    .metric-items { font-size: 0.8rem; color: var(--text-muted); }
+    .metric-amt { font-size: 1.4rem; font-weight: 800; }
+    .metric-items { font-size: 0.74rem; color: var(--text-muted); }
 
     .coach-box {
       background: #111e38;
       border: 1px solid #1e3a8a;
       border-radius: 8px;
-      padding: 12px 18px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 0.9rem;
+      gap: 10px;
+      font-size: 0.86rem;
     }
-
     .coach-badge {
       background: #2563eb;
       color: #fff;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 800;
-      padding: 4px 8px;
+      padding: 3px 7px;
       border-radius: 4px;
+      white-space: nowrap;
     }
 
     .ledger-card {
@@ -355,7 +330,7 @@
     }
 
     .ledger-header {
-      padding: 16px 20px;
+      padding: 14px 18px;
       border-bottom: 1px solid var(--card-border);
       display: flex;
       justify-content: space-between;
@@ -365,28 +340,21 @@
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th {
       background: #182234;
-      padding: 12px 18px;
-      font-size: 0.75rem;
+      padding: 10px 14px;
+      font-size: 0.74rem;
       color: var(--text-muted);
       text-transform: uppercase;
       font-weight: 700;
     }
-    td { padding: 12px 18px; border-bottom: 1px solid #283548; font-size: 0.88rem; }
-    tr:last-child td { border-bottom: none; }
+    td { padding: 12px 14px; border-bottom: 1px solid #283548; font-size: 0.86rem; }
 
-    tr.extra-care-row {
-      background: rgba(30, 58, 138, 0.18);
-    }
-    tr.extra-care-row td {
-      border-top: 1px dashed rgba(59, 130, 246, 0.4);
-      padding-top: 8px;
-      padding-bottom: 8px;
-    }
+    tr.extra-care-row { background: rgba(30, 58, 138, 0.2); }
+    tr.extra-care-row td { border-top: 1px dashed rgba(59, 130, 246, 0.4); }
 
     .type-tag {
-      padding: 3px 8px;
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
       display: inline-block;
@@ -396,26 +364,64 @@
     .tag-works { background: #14532d; color: #dcfce7; }
     .tag-lasts { background: #1e3a8a; color: #dbeafe; }
 
-    .actions-cell {
+    /* Quantity Stepper Component */
+    .qty-controls {
+      display: inline-flex;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .qty-btn {
+      background: #1e293b;
+      color: #fff;
+      border: none;
+      width: 32px;
+      height: 32px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
+      justify-content: center;
     }
+    .qty-btn:active { background: #334155; }
+    .qty-val {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--accent-yellow);
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      min-width: 40px;
+    }
+    .btn-icon.del:hover { color: #ef4444; }
 
     .strike-price {
       text-decoration: line-through;
       color: #64748b;
-      font-size: 0.78rem;
-      margin-right: 5px;
-      font-weight: normal;
+      font-size: 0.74rem;
+      margin-right: 4px;
     }
 
     /* Modal Styling */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -436,7 +442,7 @@
     }
 
     .modal-header {
-      padding: 18px 24px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--card-border);
       display: flex;
       justify-content: space-between;
@@ -444,42 +450,13 @@
     }
 
     .modal-body {
-      padding: 20px 24px;
+      padding: 16px 20px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .dropzone {
-      border: 2px dashed #475569;
-      border-radius: 8px;
-      padding: 24px;
-      text-align: center;
-      cursor: pointer;
-    }
-    .dropzone:hover { border-color: var(--accent-yellow); background: #182234; }
-
-    textarea.csv-paste {
-      width: 100%;
-      height: 100px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
-      color: #fff;
-      font-family: monospace;
-      font-size: 0.8rem;
-    }
-
-    .catalog-list {
-      max-height: 220px;
-      overflow-y: auto;
-      border: 1px solid #334155;
-      border-radius: 8px;
-    }
-
-    /* Price Edit Popup Modal */
     .edit-modal-box {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -488,9 +465,8 @@
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
     .slider-track-wrap {
@@ -513,11 +489,25 @@
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--accent-yellow);
       cursor: pointer;
+    }
+
+    /* Mobile Responsive Optimizations (QHD+ / Portrait Phone) */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      header { padding: 12px 14px; }
+      .header-actions .btn { flex: 1; min-height: 42px; font-size: 0.8rem; }
+      .total-attach-val, .total-sale-val { font-size: 1.6rem; }
+      .totals-wrapper { width: 100%; justify-content: space-between; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .metric-card { flex-direction: row; justify-content: space-between; align-items: center; }
+      .metric-amt { font-size: 1.25rem; }
+      th:nth-child(4), td:nth-child(4) { display: none; } /* Hide Category column on mobile for clean fit */
+      td { padding: 10px 8px; }
     }
   </style>
 </head>
@@ -528,14 +518,14 @@
       <div class="brand-title">
         <span class="badge-jb">JB HI-FI</span>
         <div>
-          <h2>Quality of Sale (QoS) Attach Visualizer</h2>
-          <p style="color: var(--text-muted); font-size: 0.82rem;">Training Terminal & Barcode Scanner</p>
+          <h2 style="font-size: 1.05rem;">QoS Attach Visualizer</h2>
+          <p style="color: var(--text-muted); font-size: 0.76rem;">Training & POS Simulation</p>
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn" onclick="openCatalogModal()">📁 Catalog & CSV Manager</button>
-        <button class="btn" onclick="exportCatalogFile()">💾 Export Database to USB</button>
-        <button class="btn btn-danger" onclick="clearBasket()">🗑️ Reset Basket</button>
+        <button class="btn" onclick="openCatalogModal()">📁 Catalog</button>
+        <button class="btn" onclick="exportCatalogFile()">💾 Export</button>
+        <button class="btn btn-danger" onclick="clearBasket()">🗑️ Reset</button>
       </div>
     </header>
 
@@ -545,44 +535,48 @@
           type="text" 
           id="scannerInput" 
           class="scan-input" 
-          placeholder="Scan barcode (PLU) or type SKU..." 
+          placeholder="Scan barcode or type SKU..." 
           autocomplete="off" 
           autofocus
         >
-        <button class="btn btn-primary" onclick="handleScanSubmit()">Scan / Add</button>
-        <button class="btn" id="cameraToggleBtn" onclick="toggleCameraScanner()" style="border-color: var(--accent-yellow);">📷 Open Camera Scanner</button>
+        <button class="btn btn-primary" onclick="handleScanSubmit()">Add</button>
+        <button class="btn" id="cameraToggleBtn" onclick="toggleCameraScanner()" style="border-color: var(--accent-yellow);">📷 Camera</button>
       </div>
 
-      <!-- Live Video Viewfinder -->
+      <!-- Toast Feedback Bar -->
+      <div id="toastBanner">
+        <span id="toastMsg">✓ Scanned successfully</span>
+        <button class="btn-icon" onclick="hideToast()" style="min-height:unset; min-width:unset; color:#fff;">✕</button>
+      </div>
+
+      <!-- Camera Viewport Card -->
       <div id="cameraViewportCard">
         <div id="reader"></div>
-        <button class="btn btn-danger" onclick="stopCameraScanner()" style="margin-top: 8px;">✕ Close Camera</button>
+        <button class="btn btn-danger" onclick="stopCameraScanner()" style="margin-top: 8px;">✕ Stop Camera</button>
       </div>
 
-      <div class="scan-hint">
-        <span>Ready for barcode scanner input (HID USB/Bluetooth) or phone camera.</span>
-        <span id="catalogCountDisplay" style="color: var(--accent-yellow); font-weight: 600;">Catalog: 0 items loaded</span>
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+        <span>Double-scan protection active</span>
+        <span id="catalogCountDisplay" style="color: var(--accent-yellow); font-weight: 700;">Catalog: 0 items</span>
       </div>
     </div>
 
     <div class="visualizer-card">
       <div class="vis-header">
         <div>
-          <div class="vis-title">Attach Value Distribution</div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Horizontal Dollar Split Across Attach Classifications</p>
+          <div class="vis-title" id="performanceModeTitle">Attach Distribution</div>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;" id="performanceModeDesc">Quality of Sale Split Across Pillars</p>
         </div>
         
         <div class="totals-wrapper">
-          <!-- Total Attach Value -->
           <div class="total-stat-block">
-            <span class="total-stat-label" style="color: #60a5fa;">Attach Total</span>
+            <span class="total-stat-label" style="color: #60a5fa;" id="statLabelAttach">Attach Total</span>
             <div class="total-attach-val" id="totalAttachValue">$0.00</div>
-            <div class="total-attach-sub" id="attachRateText">0.0 Attach Items / Primary</div>
+            <div class="total-attach-sub" id="attachRateText">0.0 Attach / Primary</div>
           </div>
 
-          <!-- Total Basket Price & Attach Share -->
           <div class="total-stat-block">
-            <span class="total-stat-label" style="color: var(--accent-yellow);">Total Basket</span>
+            <span class="total-stat-label" style="color: var(--accent-yellow);">Ticket Total</span>
             <div class="total-sale-val" id="totalSaleValue">$0.00</div>
             <div class="total-attach-sub" id="attachShareOfSale">0% Attach Share</div>
           </div>
@@ -598,52 +592,43 @@
 
       <div class="metric-grid">
         <div class="metric-card metric-looks">
-          <div class="metric-title" style="color: var(--color-looks);">
-            <span>🟥 LOOKS</span>
-            <span id="looksShare">0%</span>
-          </div>
+          <div class="metric-title" style="color: var(--color-looks);"><span>🟥 LOOKS</span><span id="looksShare">0%</span></div>
           <div class="metric-amt" id="looksAmt">$0.00</div>
-          <div class="metric-items" id="looksItemsCount">0 items (Cases, Bands)</div>
+          <div class="metric-items" id="looksItemsCount">0 items</div>
         </div>
 
         <div class="metric-card metric-works">
-          <div class="metric-title" style="color: var(--color-works);">
-            <span>🟩 WORKS</span>
-            <span id="worksShare">0%</span>
-          </div>
+          <div class="metric-title" style="color: var(--color-works);"><span>🟩 WORKS</span><span id="worksShare">0%</span></div>
           <div class="metric-amt" id="worksAmt">$0.00</div>
-          <div class="metric-items" id="worksItemsCount">0 items (Chargers, Cables, Soundbars)</div>
+          <div class="metric-items" id="worksItemsCount">0 items</div>
         </div>
 
         <div class="metric-card metric-lasts">
-          <div class="metric-title" style="color: var(--color-lasts);">
-            <span>🟦 LASTS</span>
-            <span id="lastsShare">0%</span>
-          </div>
+          <div class="metric-title" style="color: var(--color-lasts);"><span>🟦 LASTS</span><span id="lastsShare">0%</span></div>
           <div class="metric-amt" id="lastsAmt">$0.00</div>
-          <div class="metric-items" id="lastsItemsCount">0 items (Screen Guards, Extra Care)</div>
+          <div class="metric-items" id="lastsItemsCount">0 items</div>
         </div>
       </div>
 
       <div class="coach-box">
-        <span class="coach-badge">QoS Coach</span>
-        <div id="coachFeedback">Catalog ready. Scan items to begin coaching simulation.</div>
+        <span class="coach-badge" id="coachBadge">QoS Coach</span>
+        <div id="coachFeedback">Scan an item or handset to begin coaching simulation.</div>
       </div>
     </div>
 
     <div class="ledger-card">
       <div class="ledger-header">
-        <h3 style="font-size: 1rem;">Current Basket</h3>
-        <span id="itemSummaryCount" style="color: var(--text-muted); font-size: 0.85rem;">0 items total</span>
+        <h3 style="font-size: 0.95rem;">Current Basket</h3>
+        <span id="itemSummaryCount" style="color: var(--text-muted); font-size: 0.8rem;">0 lines</span>
       </div>
       <table>
         <thead>
           <tr>
             <th>Type</th>
-            <th>SKU / PLU</th>
-            <th>Description</th>
+            <th>Item</th>
+            <th style="text-align: center;">Qty</th>
             <th>Category</th>
-            <th>Price</th>
+            <th>Total</th>
             <th style="text-align: right;">Action</th>
           </tr>
         </thead>
@@ -658,14 +643,14 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
           <h3 style="font-size: 1rem;">Adjust Item Price</h3>
-          <p id="editItemTitle" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">Item Name</p>
+          <p id="editItemTitle" style="color: var(--text-muted); font-size: 0.78rem; margin-top: 2px;">Item Name</p>
         </div>
         <button class="btn-icon" onclick="closePriceEditModal()">✕</button>
       </div>
 
       <div>
-        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">PURCHASE PRICE ($ AUD)</label>
-        <input type="number" id="editPriceInput" step="0.01" min="0" class="scan-input" style="font-size: 1.15rem; padding: 8px 12px; width: 100%;" oninput="onManualPriceInput()">
+        <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">UNIT PRICE ($ AUD)</label>
+        <input type="number" id="editPriceInput" step="0.01" min="0" class="scan-input" style="font-size: 1.15rem; width: 100%;" oninput="onManualPriceInput()">
       </div>
 
       <div class="slider-track-wrap">
@@ -684,7 +669,7 @@
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-        <button class="btn" onclick="resetToCatalogPrice()" style="font-size: 0.78rem; padding: 6px 10px;">↺ Reset to Shelf Price</button>
+        <button class="btn" onclick="resetToCatalogPrice()" style="font-size: 0.76rem; padding: 6px 10px;">↺ Shelf Price</button>
         <div style="display: flex; gap: 8px;">
           <button class="btn" onclick="closePriceEditModal()">Cancel</button>
           <button class="btn btn-primary" onclick="saveAdjustedPrice()">Apply</button>
@@ -693,50 +678,33 @@
     </div>
   </div>
 
-  <!-- Manager Modal with CSV Loader and Dropzone -->
+  <!-- Catalog Modal -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>Catalog & CSV Importer</h3>
+        <h3>Catalog & Database</h3>
         <button class="btn-icon" onclick="closeCatalogModal()">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Import any CSV from your browser scraper or store reports. Expected columns:<br>
-          <code style="color: var(--accent-yellow);">PLU,SKU,Name,Category,Classification,Price</code>
-        </p>
-
-        <div class="dropzone" onclick="document.getElementById('csvFileInput').click()">
-          <p>📄 <strong>Click to Import CSV or JSON Database</strong></p>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Files will automatically append/merge into your existing catalog.</p>
-          <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleFileUpload(event)">
+        <div class="btn btn-primary" style="width: 100%;" onclick="document.getElementById('csvFileInput').click()">
+          📄 Tap to Import CSV or JSON Master File
+        </div>
+        <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleFileUpload(event)">
+        
+        <textarea id="pasteArea" class="scan-input" style="height: 90px; font-size: 0.8rem;" placeholder="Or paste CSV rows here..."></textarea>
+        
+        <div style="display: flex; justify-content: space-between;">
+          <button class="btn btn-danger" onclick="wipeCatalog()">Clear Database</button>
+          <button class="btn btn-primary" onclick="importPastedCSV()">Append Lines</button>
         </div>
 
-        <div>
-          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">PASTE CSV ROWS MANUALLY</label>
-          <textarea id="pasteArea" class="csv-paste" placeholder="Paste CSV rows here..."></textarea>
-          <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <button class="btn btn-danger" onclick="wipeCatalog()">⚠️ Clear Entire Catalog</button>
-            <button class="btn btn-primary" onclick="importPastedCSV()">Append Pasted Lines</button>
-          </div>
-        </div>
-
-        <div>
-          <h4 style="font-size: 0.9rem; margin-bottom: 8px;">Active Products in Database (<span id="modalCatalogCount">0</span>)</h4>
-          <div class="catalog-list">
-            <table>
-              <thead>
-                <tr>
-                  <th>PLU (Barcode)</th>
-                  <th>SKU</th>
-                  <th>Description</th>
-                  <th>Attach Type</th>
-                  <th>Price</th>
-                </tr>
-              </thead>
-              <tbody id="catalogTableBody"></tbody>
-            </table>
-          </div>
+        <div style="max-height: 220px; overflow-y: auto; border: 1px solid #334155; border-radius: 8px;">
+          <table>
+            <thead>
+              <tr><th>Barcode</th><th>SKU</th><th>Name</th><th>Type</th><th>Price</th></tr>
+            </thead>
+            <tbody id="catalogTableBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -749,6 +717,7 @@
     let lastScannedCode = null;
     let lastScanTime = 0;
     let editingItemId = null;
+    let toastTimeout = null;
 
     function init() {
       const stored = localStorage.getItem("jb_attach_catalog_clean");
@@ -765,14 +734,39 @@
 
     function updateCatalogCountDisplay() {
       const count = Object.keys(catalog).length;
-      document.getElementById("catalogCountDisplay").textContent = `Catalog: ${count} active items loaded`;
-      document.getElementById("modalCatalogCount").textContent = count;
+      document.getElementById("catalogCountDisplay").textContent = `Catalog: ${count} items loaded`;
     }
 
-    /* Core Product Processing */
+    function showToast(msg, isWarning = false) {
+      const toast = document.getElementById("toastBanner");
+      const text = document.getElementById("toastMsg");
+      text.textContent = msg;
+      toast.style.background = isWarning ? "#7f1d1d" : "#14532d";
+      toast.style.borderColor = isWarning ? "#ef4444" : "#22c55e";
+      toast.style.display = "flex";
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.style.display = "none";
+      }, 2400);
+    }
+
+    function hideToast() {
+      document.getElementById("toastBanner").style.display = "none";
+    }
+
+    /* Core Scan Processor with Double-Scan Blocker */
     function processCode(val) {
       if (!val) return;
       val = val.trim();
+      const now = Date.now();
+
+      // Accidental Double-Scan Guard (2.5s window)
+      if (val === lastScannedCode && (now - lastScanTime) < 2500) {
+        showToast(`⚠️ Rejected duplicate scan of ${val}. Use + to change qty.`, true);
+        playBeep("Reject");
+        return;
+      }
 
       let item = catalog[val];
       if (!item) {
@@ -786,22 +780,35 @@
       }
 
       if (item) {
+        lastScannedCode = val;
+        lastScanTime = now;
         playBeep(item.type);
-        basket.push({
-          id: Date.now() + Math.random(),
-          plu: item._scannedPlu || val,
-          sku: item.sku,
-          name: item.name,
-          category: item.category,
-          type: item.type,
-          price: item.price,
-          originalPrice: item.price,
-          isExtraCare: false,
-          hasExtraCare: false
-        });
-        renderBasket();
+
+        // Check if item already exists in basket -> Increment Qty instead of duplicate row
+        const existing = basket.find(x => !x.isExtraCare && (x.plu === (item._scannedPlu || val) || x.sku === item.sku));
+        if (existing) {
+          adjustQty(existing.id, 1);
+          showToast(`✓ Increased quantity: ${item.name}`);
+        } else {
+          basket.push({
+            id: Date.now() + Math.random(),
+            plu: item._scannedPlu || val,
+            sku: item.sku,
+            name: item.name,
+            category: item.category,
+            type: item.type,
+            unitPrice: item.price,
+            originalUnitPrice: item.price,
+            qty: 1,
+            isExtraCare: false,
+            hasExtraCare: false
+          });
+          showToast(`✓ Added: ${item.name}`);
+          renderBasket();
+        }
       } else {
-        alert(`Barcode / PLU [${val}] not found in database. Import it via the Catalog Manager!`);
+        showToast(`❌ Barcode [${val}] not found in database.`, true);
+        playBeep("Reject");
       }
     }
 
@@ -812,15 +819,37 @@
       input.focus();
     }
 
+    /* In-line Quantity Controller */
+    function adjustQty(itemId, delta) {
+      const item = basket.find(x => x.id === itemId);
+      if (!item) return;
+
+      const newQty = item.qty + delta;
+      if (newQty <= 0) {
+        removeItem(itemId);
+        return;
+      }
+
+      item.qty = newQty;
+
+      // Keep linked Extra Care quantity synchronized with parent hardware
+      if (item.hasExtraCare) {
+        const ecItem = basket.find(x => x.isExtraCare && x.parentId === item.id);
+        if (ecItem) ecItem.qty = newQty;
+      }
+
+      renderBasket();
+    }
+
     /* Dynamic Extra Care Attach Logic */
     function attachExtraCare(targetItemId) {
       const targetItem = basket.find(item => item.id === targetItemId);
       if (!targetItem || targetItem.isExtraCare || targetItem.hasExtraCare) return;
 
-      const basePrice = targetItem.price;
-      const isReplaceTier = basePrice <= 1000;
+      const unitPrice = targetItem.unitPrice;
+      const isReplaceTier = unitPrice <= 1000;
       const rate = isReplaceTier ? 0.20 : 0.15;
-      const ecPrice = Math.round((basePrice * rate) * 100) / 100;
+      const ecUnitPrice = Math.round((unitPrice * rate) * 100) / 100;
       const tierName = isReplaceTier ? "Extra Care Replace (20%)" : "Extra Care Repair (15%)";
       const pgCode = isReplaceTier ? "PG 1208" : "PG 1233";
 
@@ -835,8 +864,9 @@
         attachedToName: targetItem.name,
         category: `Extended Warranty (${pgCode})`,
         type: "Lasts",
-        price: ecPrice,
-        originalPrice: ecPrice,
+        unitPrice: ecUnitPrice,
+        originalUnitPrice: ecUnitPrice,
+        qty: targetItem.qty,
         isExtraCare: true
       };
 
@@ -844,21 +874,21 @@
       basket.splice(parentIdx + 1, 0, extraCareItem);
 
       playBeep("Lasts");
+      showToast(`🛡️ Attached Extra Care to ${targetItem.name}`);
       renderBasket();
     }
 
-    /* Re-evaluate Extra Care price if parent product is adjusted */
-    function recalculateLinkedExtraCare(parentId, newParentPrice) {
+    function recalculateLinkedExtraCare(parentId, newParentUnitPrice) {
       const ecItem = basket.find(item => item.isExtraCare && item.parentId === parentId);
       if (!ecItem) return;
 
-      const isReplaceTier = newParentPrice <= 1000;
+      const isReplaceTier = newParentUnitPrice <= 1000;
       const rate = isReplaceTier ? 0.20 : 0.15;
-      const newEcPrice = Math.round((newParentPrice * rate) * 100) / 100;
+      const newEcUnitPrice = Math.round((newParentUnitPrice * rate) * 100) / 100;
       const tierName = isReplaceTier ? "Extra Care Replace (20%)" : "Extra Care Repair (15%)";
       const pgCode = isReplaceTier ? "PG 1208" : "PG 1233";
 
-      ecItem.price = newEcPrice;
+      ecItem.unitPrice = newEcUnitPrice;
       ecItem.name = `Extra Care Cover (${tierName})`;
       ecItem.category = `Extended Warranty (${pgCode})`;
       ecItem.plu = isReplaceTier ? "EC-REPLACE" : "EC-REPAIR";
@@ -872,10 +902,10 @@
 
       editingItemId = itemId;
       document.getElementById("editItemTitle").textContent = `${item.name} (${item.sku})`;
-      document.getElementById("editPriceInput").value = item.price.toFixed(2);
+      document.getElementById("editPriceInput").value = item.unitPrice.toFixed(2);
       
-      const orig = item.originalPrice || item.price;
-      const currentPct = orig > 0 ? Math.max(0, Math.min(20, ((orig - item.price) / orig) * 100)) : 0;
+      const orig = item.originalUnitPrice || item.unitPrice;
+      const currentPct = orig > 0 ? Math.max(0, Math.min(20, ((orig - item.unitPrice) / orig) * 100)) : 0;
       
       const slider = document.getElementById("editDiscountSlider");
       slider.value = currentPct.toFixed(1);
@@ -899,7 +929,7 @@
       const item = basket.find(x => x.id === editingItemId);
       if (!item) return;
 
-      const base = item.originalPrice || item.price;
+      const base = item.originalUnitPrice || item.unitPrice;
       const pct = parseFloat(document.getElementById("editDiscountSlider").value);
       const discounted = Math.max(0, base * (1 - (pct / 100)));
       
@@ -911,7 +941,7 @@
       const item = basket.find(x => x.id === editingItemId);
       if (!item) return;
 
-      const base = item.originalPrice || item.price;
+      const base = item.originalUnitPrice || item.unitPrice;
       const current = parseFloat(document.getElementById("editPriceInput").value) || 0;
       
       if (base > 0 && current <= base) {
@@ -920,7 +950,7 @@
         updateSliderLabel(pct, base);
       } else {
         document.getElementById("editDiscountSlider").value = 0;
-        document.getElementById("discountSliderLabel").textContent = `Custom Price (Over Shelf)`;
+        document.getElementById("discountSliderLabel").textContent = `Custom Unit Price`;
       }
     }
 
@@ -928,7 +958,7 @@
       const item = basket.find(x => x.id === editingItemId);
       if (!item) return;
 
-      const orig = item.originalPrice || item.price;
+      const orig = item.originalUnitPrice || item.unitPrice;
       document.getElementById("editPriceInput").value = orig.toFixed(2);
       document.getElementById("editDiscountSlider").value = 0;
       updateSliderLabel(0, orig);
@@ -938,16 +968,16 @@
       const item = basket.find(x => x.id === editingItemId);
       if (!item) return;
 
-      const newPrice = parseFloat(document.getElementById("editPriceInput").value);
-      if (isNaN(newPrice) || newPrice < 0) {
+      const newUnitPrice = parseFloat(document.getElementById("editPriceInput").value);
+      if (isNaN(newUnitPrice) || newUnitPrice < 0) {
         alert("Please enter a valid price.");
         return;
       }
 
-      item.price = Math.round(newPrice * 100) / 100;
+      item.unitPrice = Math.round(newUnitPrice * 100) / 100;
 
       if (item.hasExtraCare) {
-        recalculateLinkedExtraCare(item.id, item.price);
+        recalculateLinkedExtraCare(item.id, item.unitPrice);
       }
 
       closePriceEditModal();
@@ -983,17 +1013,11 @@
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          const now = Date.now();
-          if (decodedText === lastScannedCode && now - lastScanTime < 2500) {
-            return;
-          }
-          lastScannedCode = decodedText;
-          lastScanTime = now;
           processCode(decodedText);
         },
         () => {}
-      ).catch(err => {
-        alert("Camera could not start. Ensure camera permissions are granted and the page is loaded over HTTPS.");
+      ).catch(() => {
+        alert("Camera permission denied or not running on HTTPS.");
         stopCameraScanner();
       });
     }
@@ -1032,73 +1056,86 @@
       document.getElementById("scannerInput").focus();
     }
 
+    /* Core Renderer & Dual QoS Assessment Engine */
     function renderBasket() {
       const tbody = document.getElementById("basketTableBody");
       tbody.innerHTML = "";
 
-      let primaryCount = 0;
-      let attachCount = 0;
-      let totalBasketPrice = 0;
+      let primaryUnits = 0;
+      let attachUnits = 0;
+      let totalUnits = 0;
+      let totalBasketDollars = 0;
+      let hasAnyExtraCare = false;
+
       let looksTotal = 0, worksTotal = 0, lastsTotal = 0;
       let looksItems = 0, worksItems = 0, lastsItems = 0;
 
       basket.forEach(item => {
-        totalBasketPrice += item.price;
+        const lineTotal = item.unitPrice * item.qty;
+        totalBasketDollars += lineTotal;
+        totalUnits += item.qty;
 
         if (item.type === "Primary") {
-          primaryCount++;
+          primaryUnits += item.qty;
         } else {
-          attachCount++;
-          if (item.type === "Looks") { looksTotal += item.price; looksItems++; }
-          if (item.type === "Works") { worksTotal += item.price; worksItems++; }
-          if (item.type === "Lasts") { lastsTotal += item.price; lastsItems++; }
+          attachUnits += item.qty;
+          if (item.isExtraCare) hasAnyExtraCare = true;
+
+          if (item.type === "Looks") { looksTotal += lineTotal; looksItems += item.qty; }
+          if (item.type === "Works") { worksTotal += lineTotal; worksItems += item.qty; }
+          if (item.type === "Lasts") { lastsTotal += lineTotal; lastsItems += item.qty; }
         }
 
         const tr = document.createElement("tr");
-        const hasDiscount = item.originalPrice && item.price < item.originalPrice;
+        const hasDiscount = item.originalUnitPrice && item.unitPrice < item.originalUnitPrice;
         const priceDisplay = hasDiscount 
-          ? `<span class="strike-price">$${item.originalPrice.toFixed(2)}</span>$${item.price.toFixed(2)}`
-          : `$${item.price.toFixed(2)}`;
+          ? `<span class="strike-price">$${(item.originalUnitPrice * item.qty).toFixed(2)}</span>$${lineTotal.toFixed(2)}`
+          : `$${lineTotal.toFixed(2)}`;
 
         if (item.isExtraCare) {
           tr.className = "extra-care-row";
           tr.innerHTML = `
             <td><span class="type-tag tag-lasts">LASTS</span></td>
-            <td style="font-family: monospace; color: #93c5fd;">${item.sku}</td>
             <td style="font-weight: 600; color: #93c5fd;">
-              <span style="display: inline-block; transform: scale(1.1); margin-right: 4px;">↳ 🛡️</span> 
-              ${item.name}
-              <div style="font-size: 0.76rem; color: #94a3b8; font-weight: normal; margin-left: 18px;">
-                Attached to: <strong style="color: #cbd5e1;">${item.attachedToName}</strong>
+              ↳ 🛡️ ${item.name}
+              <div style="font-size: 0.74rem; color: #94a3b8; font-weight: normal;">
+                Linked to: <strong style="color: #cbd5e1;">${item.attachedToName}</strong>
               </div>
             </td>
+            <td style="text-align: center;"><span style="font-weight: 800; color: #93c5fd;">${item.qty}</span></td>
             <td style="color: var(--text-muted);">${item.category}</td>
             <td style="font-weight: 700; color: #93c5fd;">${priceDisplay}</td>
             <td style="text-align: right;">
-              <div class="actions-cell">
-                <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Edit Price">✏️</button>
-                <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Extra Care">🗑️</button>
-              </div>
+              <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Care">🗑️</button>
             </td>
           `;
         } else {
-          const careBtnHtml = !item.hasExtraCare && item.price > 0 ? `
-            <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care (${item.price <= 1000 ? '20% Replace' : '15% Repair'})">
-              🛡️ + Extra Care
+          const careBtnHtml = !item.hasExtraCare && item.unitPrice > 0 ? `
+            <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care">
+              🛡️ + Care
             </button>
-          ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 2px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
+          ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 4px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
 
           tr.innerHTML = `
             <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
-            <td style="font-family: monospace;">${item.sku} <span style="color: #64748b;">(${item.plu})</span></td>
-            <td style="font-weight: 600;">${item.name}</td>
+            <td style="font-weight: 600;">
+              ${item.name}
+              <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">${item.sku}</div>
+            </td>
+            <td style="text-align: center;">
+              <div class="qty-controls">
+                <button class="qty-btn" onclick="adjustQty(${item.id}, -1)">−</button>
+                <span class="qty-val">${item.qty}</span>
+                <button class="qty-btn" onclick="adjustQty(${item.id}, 1)">+</button>
+              </div>
+            </td>
             <td style="color: var(--text-muted);">${item.category}</td>
             <td style="font-weight: 700;">${priceDisplay}</td>
             <td style="text-align: right;">
-              <div class="actions-cell">
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
                 ${careBtnHtml}
-                <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Adjust Price / Discount">✏️️</button>
-                <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Item">🗑️</button>
+                <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Discount">✏️</button>
+                <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove">🗑️</button>
               </div>
             </td>
           `;
@@ -1107,27 +1144,19 @@
       });
 
       const totalAttachDollars = looksTotal + worksTotal + lastsTotal;
-      
-      // Update Top Metrics
       document.getElementById("totalAttachValue").textContent = `$${totalAttachDollars.toFixed(2)}`;
-      document.getElementById("totalSaleValue").textContent = `$${totalBasketPrice.toFixed(2)}`;
-
-      const attachRate = primaryCount > 0 ? (attachCount / primaryCount).toFixed(1) : "0.0";
-      document.getElementById("attachRateText").textContent = `${attachRate} Attach Items / Primary (${primaryCount} primary)`;
-
-      const attachSharePct = totalBasketPrice > 0 ? Math.round((totalAttachDollars / totalBasketPrice) * 100) : 0;
-      document.getElementById("attachShareOfSale").textContent = `${attachSharePct}% of Total Sale is Attach`;
-
-      document.getElementById("itemSummaryCount").textContent = `${basket.length} items total`;
+      document.getElementById("totalSaleValue").textContent = `$${totalBasketDollars.toFixed(2)}`;
+      document.getElementById("itemSummaryCount").textContent = `${basket.length} lines (${totalUnits} items)`;
 
       document.getElementById("looksAmt").textContent = `$${looksTotal.toFixed(2)}`;
       document.getElementById("worksAmt").textContent = `$${worksTotal.toFixed(2)}`;
       document.getElementById("lastsAmt").textContent = `$${lastsTotal.toFixed(2)}`;
 
-      document.getElementById("looksItemsCount").textContent = `${looksItems} items (Looks)`;
-      document.getElementById("worksItemsCount").textContent = `${worksItems} items (Works)`;
-      document.getElementById("lastsItemsCount").textContent = `${lastsItems} items (Lasts)`;
+      document.getElementById("looksItemsCount").textContent = `${looksItems} items`;
+      document.getElementById("worksItemsCount").textContent = `${worksItems} items`;
+      document.getElementById("lastsItemsCount").textContent = `${lastsItems} items`;
 
+      // Update Horizontal Bar
       const segLooks = document.getElementById("barSegmentLooks");
       const segWorks = document.getElementById("barSegmentWorks");
       const segLasts = document.getElementById("barSegmentLasts");
@@ -1143,35 +1172,79 @@
         segWorks.style.width = wPct + "%";
         segLasts.style.width = ltPct + "%";
 
-        segLooks.textContent = lPct > 8 ? `$${looksTotal.toFixed(0)}` : "";
-        segWorks.textContent = wPct > 8 ? `$${worksTotal.toFixed(0)}` : "";
-        segLasts.textContent = ltPct > 8 ? `$${lastsTotal.toFixed(0)}` : "";
+        segLooks.textContent = lPct > 10 ? `$${looksTotal.toFixed(0)}` : "";
+        segWorks.textContent = wPct > 10 ? `$${worksTotal.toFixed(0)}` : "";
+        segLasts.textContent = ltPct > 10 ? `$${lastsTotal.toFixed(0)}` : "";
 
         document.getElementById("looksShare").textContent = `${lPct.toFixed(0)}%`;
         document.getElementById("worksShare").textContent = `${wPct.toFixed(0)}%`;
         document.getElementById("lastsShare").textContent = `${ltPct.toFixed(0)}%`;
       } else {
         emptyMsg.style.display = "flex";
-        segLooks.style.width = "0%";
-        segWorks.style.width = "0%";
-        segLasts.style.width = "0%";
+        segLooks.style.width = "0%"; segWorks.style.width = "0%"; segLasts.style.width = "0%";
         document.getElementById("looksShare").textContent = "0%";
         document.getElementById("worksShare").textContent = "0%";
         document.getElementById("lastsShare").textContent = "0%";
       }
 
+      // =====================================================================
+      // DUAL QOS & COACHING ASSESSMENT (Primary Attach vs Multi-Item IPS)
+      // =====================================================================
       const coach = document.getElementById("coachFeedback");
-      if (primaryCount > 0 && attachCount === 0) {
-        coach.innerHTML = "⚠️ <strong style='color:#f87171;'>Warning: Naked Sale!</strong> Handset or hardware sold without accessories or care.";
-      } else if (primaryCount > 0 && (looksItems === 0 || worksItems === 0 || lastsItems === 0)) {
-        coach.innerHTML = "🟡 <strong>Sale in progress:</strong> Keep balancing the ticket across Looks, Works, and Lasts.";
-      } else if (primaryCount > 0 && looksItems > 0 && worksItems > 0 && lastsItems > 0) {
-        coach.innerHTML = "🌟 <strong style='color:#4ade80;'>Elite 3-Pillar Attach:</strong> Full Looks, Works, and Lasts coverage achieved!";
-      } else if (basket.length === 0) {
-        coach.textContent = "Catalog ready. Scan items to begin coaching simulation.";
+      const coachBadge = document.getElementById("coachBadge");
+      const titleEl = document.getElementById("performanceModeTitle");
+      const descEl = document.getElementById("performanceModeDesc");
+      const statLabelAttach = document.getElementById("statLabelAttach");
+      const attachRateText = document.getElementById("attachRateText");
+      const attachShareOfSale = document.getElementById("attachShareOfSale");
+
+      const attachSharePct = totalBasketDollars > 0 ? Math.round((totalAttachDollars / totalBasketDollars) * 100) : 0;
+      attachShareOfSale.textContent = `${attachSharePct}% Attach Share of Basket`;
+
+      if (primaryUnits > 0) {
+        // MODE A: PRIMARY HARDWARE PRESENT (Attach Rate Driven)
+        titleEl.textContent = "Attach Distribution";
+        descEl.textContent = "Quality of Sale Split Across Pillars";
+        statLabelAttach.textContent = "Attach Total";
+        attachRateText.textContent = `${(attachUnits / primaryUnits).toFixed(1)} Attach / Primary (${primaryUnits} primary)`;
+        coachBadge.textContent = "Attach QoS";
+        coachBadge.style.background = "#2563eb";
+
+        if (attachUnits === 0) {
+          coach.innerHTML = "⚠️ <strong style='color:#f87171;'>Warning: Naked Sale!</strong> Handset or hardware sold without accessories or care.";
+        } else if (looksItems > 0 && worksItems > 0 && lastsItems > 0) {
+          coach.innerHTML = "🌟 <strong style='color:#4ade80;'>Elite 3-Pillar Attach:</strong> Full Looks, Works, and Lasts coverage achieved!";
+        } else {
+          coach.innerHTML = "🟡 <strong>Sale in progress:</strong> Good start. Balance across missing Looks, Works, or Lasts pillars.";
+        }
+      } else if (totalUnits > 0) {
+        // MODE B: ACCESSORY-ONLY TRANSACTION (Items Per Sale Driven)
+        titleEl.textContent = "Accessory IPS Performance";
+        descEl.textContent = "Items Per Sale Quality Assessment";
+        statLabelAttach.textContent = "Accessory Total";
+        attachRateText.textContent = `${totalUnits}.0 IPS (${totalUnits} items)`;
+        coachBadge.textContent = "IPS QoS";
+        coachBadge.style.background = "#059669";
+
+        if (totalUnits === 1) {
+          coach.innerHTML = "⚪ <strong>Single Item Sale (1.0 IPS):</strong> Lone accessory sold. Look for natural links (e.g. cable with charger).";
+        } else if (totalUnits >= 2 && hasAnyExtraCare) {
+          coach.innerHTML = "💎 <strong style='color:#38bdf8;'>Elite Multi-Item Basket (" + totalUnits + ".0 IPS + Care):</strong> High-value add-on sale with protection!";
+        } else if (totalUnits >= 2) {
+          coach.innerHTML = "🟢 <strong style='color:#4ade80;'>Strong Multi-Item Sale (" + totalUnits + ".0 IPS):</strong> Solid accessory basket building.";
+        }
+      } else {
+        // EMPTY BASKET
+        titleEl.textContent = "Attach Distribution";
+        descEl.textContent = "Quality of Sale Split Across Pillars";
+        attachRateText.textContent = "0.0 Attach / Primary";
+        coachBadge.textContent = "QoS Coach";
+        coachBadge.style.background = "#2563eb";
+        coach.textContent = "Scan an item or handset to begin coaching simulation.";
       }
     }
 
+    /* High-Volume, Crisp Audible Feedback Engine */
     function playBeep(type) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1179,11 +1252,23 @@
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.frequency.setValueAtTime(type === "Primary" ? 440 : (type === "Lasts" ? 780 : (type === "Works" ? 620 : 520)), ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
+        let freq = 1200;
+        if (type === "Primary") freq = 880;        // A5 (Punchy, resonant)
+        else if (type === "Lasts") freq = 1760;    // A6 (High-pitch ring for protection)
+        else if (type === "Works") freq = 1480;    // F#6 (Bright chirp)
+        else if (type === "Looks") freq = 1320;    // E6
+        else if (type === "Reject") freq = 320;    // Low buzz warning
+
+        osc.type = type === "Reject" ? "sawtooth" : "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        
+        // High mobile gain
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
         osc.start();
-        osc.stop(ctx.currentTime + 0.12);
+        osc.stop(ctx.currentTime + 0.15);
       } catch (e) {}
     }
 
@@ -1227,7 +1312,7 @@
             const data = JSON.parse(content);
             catalog = { ...catalog, ...data };
             saveCatalog();
-            alert("Database merged successfully from JSON file!");
+            alert("Database merged successfully from JSON!");
           } catch(err) { alert("Invalid JSON file."); }
         } else {
           parseCSVLines(content);
@@ -1280,7 +1365,7 @@
     }
 
     function wipeCatalog() {
-      if (confirm("Are you sure you want to clear all products from the catalog?")) {
+      if (confirm("Clear all items from catalog?")) {
         catalog = {};
         saveCatalog();
       }
