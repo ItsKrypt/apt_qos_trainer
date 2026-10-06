@@ -496,7 +496,6 @@
       cursor: pointer;
     }
 
-    /* Mobile Responsive Optimizations (QHD+ / Portrait Phone) */
     @media (max-width: 768px) {
       body { padding: 10px; }
       header { padding: 12px 14px; }
@@ -506,7 +505,7 @@
       .metric-grid { grid-template-columns: 1fr; }
       .metric-card { flex-direction: row; justify-content: space-between; align-items: center; }
       .metric-amt { font-size: 1.25rem; }
-      th:nth-child(4), td:nth-child(4) { display: none; } /* Hide Category column on mobile for clean fit */
+      th:nth-child(4), td:nth-child(4) { display: none; }
       td { padding: 10px 8px; }
     }
   </style>
@@ -543,20 +542,18 @@
         <button class="btn" id="cameraToggleBtn" onclick="toggleCameraScanner()" style="border-color: var(--accent-yellow);">📷 Camera</button>
       </div>
 
-      <!-- Toast Feedback Bar -->
       <div id="toastBanner">
         <span id="toastMsg">✓ Scanned successfully</span>
         <button class="btn-icon" onclick="hideToast()" style="min-height:unset; min-width:unset; color:#fff;">✕</button>
       </div>
 
-      <!-- Camera Viewport Card -->
       <div id="cameraViewportCard">
         <div id="reader"></div>
         <button class="btn btn-danger" onclick="stopCameraScanner()" style="margin-top: 8px;">✕ Stop Camera</button>
       </div>
 
       <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-        <span>Double-scan protection active</span>
+        <span>1s global cooldown & double-scan protection active</span>
         <span id="catalogCountDisplay" style="color: var(--accent-yellow); font-weight: 700;">Catalog: 0 items</span>
       </div>
     </div>
@@ -637,7 +634,6 @@
     </div>
   </div>
 
-  <!-- Price Adjustment Modal -->
   <div class="modal-overlay" id="priceEditModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -678,7 +674,6 @@
     </div>
   </div>
 
-  <!-- Catalog Modal -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -716,6 +711,7 @@
     let html5QrCodeScanner = null;
     let lastScannedCode = null;
     let lastScanTime = 0;
+    let isScanCoolingDown = false;
     let editingItemId = null;
     let toastTimeout = null;
 
@@ -755,15 +751,20 @@
       document.getElementById("toastBanner").style.display = "none";
     }
 
-    /* Core Scan Processor with Double-Scan Blocker */
+    /* Core Scan Processor with 1-Second Global Cooldown & Double-Scan Blocker */
     function processCode(val) {
       if (!val) return;
       val = val.trim();
       const now = Date.now();
 
-      // Accidental Double-Scan Guard (2.5s window)
+      // 1. HARD 1-SECOND GLOBAL COOLDOWN
+      if (isScanCoolingDown || (now - lastScanTime) < 1000) {
+        return;
+      }
+
+      // 2. ACCIDENTAL REPEAT GUARD (2.5s window for exact same item)
       if (val === lastScannedCode && (now - lastScanTime) < 2500) {
-        showToast(`⚠️ Rejected duplicate scan of ${val}. Use + to change qty.`, true);
+        showToast(`⚠️ Duplicate scan rejected: ${val}. Use + to change qty.`, true);
         playBeep("Reject");
         return;
       }
@@ -780,11 +781,13 @@
       }
 
       if (item) {
+        isScanCoolingDown = true;
         lastScannedCode = val;
         lastScanTime = now;
+        setTimeout(() => { isScanCoolingDown = false; }, 1000);
+
         playBeep(item.type);
 
-        // Check if item already exists in basket -> Increment Qty instead of duplicate row
         const existing = basket.find(x => !x.isExtraCare && (x.plu === (item._scannedPlu || val) || x.sku === item.sku));
         if (existing) {
           adjustQty(existing.id, 1);
@@ -807,7 +810,7 @@
           renderBasket();
         }
       } else {
-        showToast(`❌ Barcode [${val}] not found in database.`, true);
+        showToast(`❌ Barcode [${val}] not in database.`, true);
         playBeep("Reject");
       }
     }
@@ -819,7 +822,6 @@
       input.focus();
     }
 
-    /* In-line Quantity Controller */
     function adjustQty(itemId, delta) {
       const item = basket.find(x => x.id === itemId);
       if (!item) return;
@@ -832,7 +834,6 @@
 
       item.qty = newQty;
 
-      // Keep linked Extra Care quantity synchronized with parent hardware
       if (item.hasExtraCare) {
         const ecItem = basket.find(x => x.isExtraCare && x.parentId === item.id);
         if (ecItem) ecItem.qty = newQty;
@@ -841,7 +842,6 @@
       renderBasket();
     }
 
-    /* Dynamic Extra Care Attach Logic */
     function attachExtraCare(targetItemId) {
       const targetItem = basket.find(item => item.id === targetItemId);
       if (!targetItem || targetItem.isExtraCare || targetItem.hasExtraCare) return;
@@ -895,7 +895,6 @@
       ecItem.sku = isReplaceTier ? "EC-REPLACE" : "EC-REPAIR";
     }
 
-    /* Price Edit Modal Operations */
     function openPriceEditModal(itemId) {
       const item = basket.find(x => x.id === itemId);
       if (!item) return;
@@ -984,7 +983,6 @@
       renderBasket();
     }
 
-    /* Smartphone Camera Scanner Controller */
     function toggleCameraScanner() {
       const card = document.getElementById("cameraViewportCard");
       if (card.style.display === "block") {
@@ -1056,7 +1054,6 @@
       document.getElementById("scannerInput").focus();
     }
 
-    /* Core Renderer & Dual QoS Assessment Engine */
     function renderBasket() {
       const tbody = document.getElementById("basketTableBody");
       tbody.innerHTML = "";
@@ -1156,7 +1153,6 @@
       document.getElementById("worksItemsCount").textContent = `${worksItems} items`;
       document.getElementById("lastsItemsCount").textContent = `${lastsItems} items`;
 
-      // Update Horizontal Bar
       const segLooks = document.getElementById("barSegmentLooks");
       const segWorks = document.getElementById("barSegmentWorks");
       const segLasts = document.getElementById("barSegmentLasts");
@@ -1187,9 +1183,6 @@
         document.getElementById("lastsShare").textContent = "0%";
       }
 
-      // =====================================================================
-      // DUAL QOS & COACHING ASSESSMENT (Primary Attach vs Multi-Item IPS)
-      // =====================================================================
       const coach = document.getElementById("coachFeedback");
       const coachBadge = document.getElementById("coachBadge");
       const titleEl = document.getElementById("performanceModeTitle");
@@ -1202,7 +1195,6 @@
       attachShareOfSale.textContent = `${attachSharePct}% Attach Share of Basket`;
 
       if (primaryUnits > 0) {
-        // MODE A: PRIMARY HARDWARE PRESENT (Attach Rate Driven)
         titleEl.textContent = "Attach Distribution";
         descEl.textContent = "Quality of Sale Split Across Pillars";
         statLabelAttach.textContent = "Attach Total";
@@ -1218,7 +1210,6 @@
           coach.innerHTML = "🟡 <strong>Sale in progress:</strong> Good start. Balance across missing Looks, Works, or Lasts pillars.";
         }
       } else if (totalUnits > 0) {
-        // MODE B: ACCESSORY-ONLY TRANSACTION (Items Per Sale Driven)
         titleEl.textContent = "Accessory IPS Performance";
         descEl.textContent = "Items Per Sale Quality Assessment";
         statLabelAttach.textContent = "Accessory Total";
@@ -1234,7 +1225,6 @@
           coach.innerHTML = "🟢 <strong style='color:#4ade80;'>Strong Multi-Item Sale (" + totalUnits + ".0 IPS):</strong> Solid accessory basket building.";
         }
       } else {
-        // EMPTY BASKET
         titleEl.textContent = "Attach Distribution";
         descEl.textContent = "Quality of Sale Split Across Pillars";
         attachRateText.textContent = "0.0 Attach / Primary";
@@ -1244,7 +1234,6 @@
       }
     }
 
-    /* High-Volume, Crisp Audible Feedback Engine */
     function playBeep(type) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1254,16 +1243,15 @@
         gain.connect(ctx.destination);
 
         let freq = 1200;
-        if (type === "Primary") freq = 880;        // A5 (Punchy, resonant)
-        else if (type === "Lasts") freq = 1760;    // A6 (High-pitch ring for protection)
-        else if (type === "Works") freq = 1480;    // F#6 (Bright chirp)
-        else if (type === "Looks") freq = 1320;    // E6
-        else if (type === "Reject") freq = 320;    // Low buzz warning
+        if (type === "Primary") freq = 880;
+        else if (type === "Lasts") freq = 1760;
+        else if (type === "Works") freq = 1480;
+        else if (type === "Looks") freq = 1320;
+        else if (type === "Reject") freq = 320;
 
         osc.type = type === "Reject" ? "sawtooth" : "sine";
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
         
-        // High mobile gain
         gain.gain.setValueAtTime(0.18, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
 
