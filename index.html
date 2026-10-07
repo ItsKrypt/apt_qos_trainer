@@ -133,22 +133,97 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      position: relative;
+    }
+
+    .scan-input-container {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+      display: flex;
     }
 
     .scan-input {
-      flex: 1;
-      min-width: 180px;
+      width: 100%;
       background: #0f172a;
       border: 2px solid #334155;
       border-radius: 8px;
       color: #fff;
       font-size: 1.15rem;
       padding: 10px 14px;
-      font-family: monospace;
       outline: none;
       min-height: 46px;
     }
     .scan-input:focus { border-color: var(--accent-yellow); }
+
+    /* Live Search Dropdown Suggestions */
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      max-height: 340px;
+      overflow-y: auto;
+      list-style: none;
+      z-index: 1000;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+    }
+
+    .search-dropdown li {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.1s ease;
+    }
+
+    .search-dropdown li:last-child {
+      border-bottom: none;
+    }
+
+    .search-dropdown li:hover,
+    .search-dropdown li.active {
+      background: #1e293b;
+    }
+
+    .dropdown-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 3px;
+    }
+
+    .dropdown-title {
+      color: #f8fafc;
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dropdown-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .dropdown-price {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--accent-yellow);
+      white-space: nowrap;
+    }
 
     #toastBanner {
       display: none;
@@ -530,14 +605,17 @@
 
     <div class="scan-card">
       <div class="scan-input-wrapper">
-        <input 
-          type="text" 
-          id="scannerInput" 
-          class="scan-input" 
-          placeholder="Scan barcode or type SKU..." 
-          autocomplete="off" 
-          autofocus
-        >
+        <div class="scan-input-container">
+          <input 
+            type="text" 
+            id="scannerInput" 
+            class="scan-input" 
+            placeholder="Scan barcode, SKU, or type product name..." 
+            autocomplete="off" 
+            autofocus
+          >
+          <ul id="searchDropdown" class="search-dropdown"></ul>
+        </div>
         <button class="btn btn-primary" onclick="handleScanSubmit()">Add</button>
         <button class="btn" id="cameraToggleBtn" onclick="toggleCameraScanner()" style="border-color: var(--accent-yellow);">📷 Camera</button>
       </div>
@@ -707,6 +785,10 @@
 
   <script>
     let catalog = {};
+    let searchIndex = [];
+    let currentMatches = [];
+    let dropdownSelectedIndex = -1;
+
     let basket = [];
     let html5QrCodeScanner = null;
     let lastScannedCode = null;
@@ -715,17 +797,160 @@
     let editingItemId = null;
     let toastTimeout = null;
 
-    function init() {
+    async function init() {
+      // 1. Try Local Storage
       const stored = localStorage.getItem("jb_attach_catalog_clean");
       if (stored) {
         try { catalog = JSON.parse(stored); } catch (e) { catalog = {}; }
       }
+
+      // 2. Fallback: Auto-fetch catalog.json if hosted in GitHub repository root
+      if (Object.keys(catalog).length === 0) {
+        try {
+          const res = await fetch("./catalog.json");
+          if (res.ok) {
+            catalog = await res.json();
+            localStorage.setItem("jb_attach_catalog_clean", JSON.stringify(catalog));
+          }
+        } catch (e) {}
+      }
+
+      rebuildSearchIndex();
       updateCatalogCountDisplay();
       renderBasket();
 
-      document.getElementById("scannerInput").addEventListener("keydown", function(e) {
-        if (e.key === "Enter") handleScanSubmit();
+      setupSearchDropdown();
+    }
+
+    function rebuildSearchIndex() {
+      const seenSkus = new Set();
+      searchIndex = [];
+
+      Object.keys(catalog).forEach(key => {
+        const item = catalog[key];
+        const uniqueKey = item.sku || key;
+        if (!seenSkus.has(uniqueKey)) {
+          seenSkus.add(uniqueKey);
+          searchIndex.push({
+            ...item,
+            _lookupKey: key,
+            _searchStr: `${item.name} ${item.sku} ${item.category || ""}`.toLowerCase()
+          });
+        }
       });
+    }
+
+    function setupSearchDropdown() {
+      const input = document.getElementById("scannerInput");
+      const dropdown = document.getElementById("searchDropdown");
+
+      input.addEventListener("input", () => {
+        const query = input.value.trim().toLowerCase();
+        if (query.length < 2) {
+          hideDropdown();
+          return;
+        }
+
+        const tokens = query.split(/\s+/).filter(Boolean);
+        currentMatches = [];
+
+        for (let i = 0; i < searchIndex.length; i++) {
+          const item = searchIndex[i];
+          if (tokens.every(t => item._searchStr.includes(t))) {
+            currentMatches.push(item);
+            if (currentMatches.length >= 8) break;
+          }
+        }
+
+        renderDropdown(currentMatches);
+      });
+
+      input.addEventListener("keydown", (e) => {
+        const items = dropdown.querySelectorAll("li");
+
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (items.length === 0) return;
+          dropdownSelectedIndex = (dropdownSelectedIndex + 1) % items.length;
+          updateActiveDropdown(items);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (items.length === 0) return;
+          dropdownSelectedIndex = (dropdownSelectedIndex - 1 + items.length) % items.length;
+          updateActiveDropdown(items);
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          if (dropdownSelectedIndex >= 0 && currentMatches[dropdownSelectedIndex]) {
+            processItemObject(currentMatches[dropdownSelectedIndex]);
+            input.value = "";
+            hideDropdown();
+            return;
+          }
+          handleScanSubmit();
+        } else if (e.key === "Escape") {
+          hideDropdown();
+        }
+      });
+
+      dropdown.addEventListener("click", (e) => {
+        const li = e.target.closest("li");
+        if (!li) return;
+        const idx = parseInt(li.dataset.index, 10);
+        if (currentMatches[idx]) {
+          processItemObject(currentMatches[idx]);
+          input.value = "";
+          hideDropdown();
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".scan-input-container")) hideDropdown();
+      });
+    }
+
+    function renderDropdown(items) {
+      const dropdown = document.getElementById("searchDropdown");
+      if (items.length === 0) {
+        hideDropdown();
+        return;
+      }
+
+      dropdownSelectedIndex = -1;
+      dropdown.innerHTML = items.map((item, idx) => `
+        <li data-index="${idx}">
+          <div class="dropdown-info">
+            <span class="dropdown-title">${escapeHTML(item.name)}</span>
+            <div class="dropdown-meta">
+              <span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span>
+              <span>SKU: ${item.sku}</span>
+            </div>
+          </div>
+          <span class="dropdown-price">$${Number(item.price).toFixed(2)}</span>
+        </li>
+      `).join("");
+
+      dropdown.style.display = "block";
+    }
+
+    function hideDropdown() {
+      const dropdown = document.getElementById("searchDropdown");
+      dropdown.style.display = "none";
+      dropdown.innerHTML = "";
+      dropdownSelectedIndex = -1;
+      currentMatches = [];
+    }
+
+    function updateActiveDropdown(elements) {
+      elements.forEach((el, idx) => {
+        el.classList.toggle("active", idx === dropdownSelectedIndex);
+        if (idx === dropdownSelectedIndex) el.scrollIntoView({ block: "nearest" });
+      });
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
     }
 
     function updateCatalogCountDisplay() {
@@ -781,43 +1006,59 @@
       }
 
       if (item) {
-        isScanCoolingDown = true;
-        lastScannedCode = val;
-        lastScanTime = now;
-        setTimeout(() => { isScanCoolingDown = false; }, 1000);
-
-        playBeep(item.type);
-
-        const existing = basket.find(x => !x.isExtraCare && (x.plu === (item._scannedPlu || val) || x.sku === item.sku));
-        if (existing) {
-          adjustQty(existing.id, 1);
-          showToast(`✓ Increased quantity: ${item.name}`);
-        } else {
-          basket.push({
-            id: Date.now() + Math.random(),
-            plu: item._scannedPlu || val,
-            sku: item.sku,
-            name: item.name,
-            category: item.category,
-            type: item.type,
-            unitPrice: item.price,
-            originalUnitPrice: item.price,
-            qty: 1,
-            isExtraCare: false,
-            hasExtraCare: false
-          });
-          showToast(`✓ Added: ${item.name}`);
-          renderBasket();
-        }
+        processItemObject(item, val);
       } else {
         showToast(`❌ Barcode [${val}] not in database.`, true);
         playBeep("Reject");
       }
     }
 
+    function processItemObject(item, fallbackCode = "") {
+      const now = Date.now();
+      const codeKey = item._scannedPlu || item._lookupKey || item.sku || fallbackCode;
+
+      isScanCoolingDown = true;
+      lastScannedCode = codeKey;
+      lastScanTime = now;
+      setTimeout(() => { isScanCoolingDown = false; }, 1000);
+
+      playBeep(item.type);
+
+      const existing = basket.find(x => !x.isExtraCare && (x.plu === codeKey || x.sku === item.sku));
+      if (existing) {
+        adjustQty(existing.id, 1);
+        showToast(`✓ Increased quantity: ${item.name}`);
+      } else {
+        basket.push({
+          id: Date.now() + Math.random(),
+          plu: codeKey,
+          sku: item.sku,
+          name: item.name,
+          category: item.category,
+          type: item.type,
+          unitPrice: Number(item.price) || 0.00,
+          originalUnitPrice: Number(item.price) || 0.00,
+          qty: 1,
+          isExtraCare: false,
+          hasExtraCare: false
+        });
+        showToast(`✓ Added: ${item.name}`);
+        renderBasket();
+      }
+    }
+
     function handleScanSubmit() {
       const input = document.getElementById("scannerInput");
-      processCode(input.value);
+      const val = input.value.trim();
+      hideDropdown();
+
+      // If top search match exists for typed characters, prefer it
+      if (currentMatches.length > 0 && !catalog[val]) {
+        processItemObject(currentMatches[0]);
+      } else {
+        processCode(val);
+      }
+      
       input.value = "";
       input.focus();
     }
@@ -1348,6 +1589,7 @@
 
     function saveCatalog() {
       localStorage.setItem("jb_attach_catalog_clean", JSON.stringify(catalog));
+      rebuildSearchIndex();
       renderCatalogTable();
       updateCatalogCountDisplay();
     }
