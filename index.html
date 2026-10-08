@@ -362,10 +362,34 @@
       flex-direction: column;
       gap: 2px;
       border-left: 4px solid transparent;
+      position: relative;
+      overflow: hidden;
+      background: #0f172a;
+      border: 1px solid #334155;
     }
-    .metric-looks { background: var(--color-looks-bg); border-left-color: var(--color-looks); }
-    .metric-works { background: var(--color-works-bg); border-left-color: var(--color-works); }
-    .metric-lasts { background: var(--color-lasts-bg); border-left-color: var(--color-lasts); }
+    .metric-looks { border-left-color: var(--color-looks); }
+    .metric-works { border-left-color: var(--color-works); }
+    .metric-lasts { border-left-color: var(--color-lasts); }
+
+    /* Proportional Horizontal Fill Layer for Individual Cards */
+    .metric-fill-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: 100%;
+      transition: width 0.3s ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .fill-looks { background: rgba(239, 68, 68, 0.35); }
+    .fill-works { background: rgba(34, 197, 94, 0.35); }
+    .fill-lasts { background: rgba(59, 130, 246, 0.35); }
+
+    .metric-card > *:not(.metric-fill-bar) {
+      position: relative;
+      z-index: 2;
+    }
 
     .metric-title {
       font-size: 0.74rem;
@@ -667,18 +691,21 @@
 
       <div class="metric-grid">
         <div class="metric-card metric-looks">
+          <div class="metric-fill-bar fill-looks" id="cardFillLooks" style="width: 0%;"></div>
           <div class="metric-title" style="color: var(--color-looks);"><span>🟥 LOOKS</span><span id="looksShare">0%</span></div>
           <div class="metric-amt" id="looksAmt">$0.00</div>
           <div class="metric-items" id="looksItemsCount">0 items</div>
         </div>
 
         <div class="metric-card metric-works">
+          <div class="metric-fill-bar fill-works" id="cardFillWorks" style="width: 0%;"></div>
           <div class="metric-title" style="color: var(--color-works);"><span>🟩 WORKS</span><span id="worksShare">0%</span></div>
           <div class="metric-amt" id="worksAmt">$0.00</div>
           <div class="metric-items" id="worksItemsCount">0 items</div>
         </div>
 
         <div class="metric-card metric-lasts">
+          <div class="metric-fill-bar fill-lasts" id="cardFillLasts" style="width: 0%;"></div>
           <div class="metric-title" style="color: var(--color-lasts);"><span>🟦 LASTS</span><span id="lastsShare">0%</span></div>
           <div class="metric-amt" id="lastsAmt">$0.00</div>
           <div class="metric-items" id="lastsItemsCount">0 items</div>
@@ -798,13 +825,11 @@
     let toastTimeout = null;
 
     async function init() {
-      // 1. Try Local Storage
       const stored = localStorage.getItem("jb_attach_catalog_clean");
       if (stored) {
         try { catalog = JSON.parse(stored); } catch (e) { catalog = {}; }
       }
 
-      // 2. Fallback: Auto-fetch catalog.json if hosted in GitHub repository root
       if (Object.keys(catalog).length === 0) {
         try {
           const res = await fetch("./catalog.json");
@@ -1052,7 +1077,6 @@
       const val = input.value.trim();
       hideDropdown();
 
-      // If top search match exists for typed characters, prefer it
       if (currentMatches.length > 0 && !catalog[val]) {
         processItemObject(currentMatches[0]);
       } else {
@@ -1397,6 +1421,11 @@
       const segLooks = document.getElementById("barSegmentLooks");
       const segWorks = document.getElementById("barSegmentWorks");
       const segLasts = document.getElementById("barSegmentLasts");
+
+      const cardFillLooks = document.getElementById("cardFillLooks");
+      const cardFillWorks = document.getElementById("cardFillWorks");
+      const cardFillLasts = document.getElementById("cardFillLasts");
+
       const emptyMsg = document.getElementById("emptyBarMsg");
 
       if (totalAttachDollars > 0) {
@@ -1409,6 +1438,11 @@
         segWorks.style.width = wPct + "%";
         segLasts.style.width = ltPct + "%";
 
+        // Align each individual card's fill bar to the exact same width as the top bar
+        cardFillLooks.style.width = lPct + "%";
+        cardFillWorks.style.width = wPct + "%";
+        cardFillLasts.style.width = ltPct + "%";
+
         segLooks.textContent = lPct > 10 ? `$${looksTotal.toFixed(0)}` : "";
         segWorks.textContent = wPct > 10 ? `$${worksTotal.toFixed(0)}` : "";
         segLasts.textContent = ltPct > 10 ? `$${lastsTotal.toFixed(0)}` : "";
@@ -1419,6 +1453,7 @@
       } else {
         emptyMsg.style.display = "flex";
         segLooks.style.width = "0%"; segWorks.style.width = "0%"; segLasts.style.width = "0%";
+        cardFillLooks.style.width = "0%"; cardFillWorks.style.width = "0%"; cardFillLasts.style.width = "0%";
         document.getElementById("looksShare").textContent = "0%";
         document.getElementById("worksShare").textContent = "0%";
         document.getElementById("lastsShare").textContent = "0%";
