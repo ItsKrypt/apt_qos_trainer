@@ -461,13 +461,13 @@
     }
     td { padding: 12px 14px; border-bottom: 1px solid #283548; font-size: 0.86rem; }
 
+    tr.primary-row { background: rgba(168, 85, 247, 0.08); }
     tr.extra-care-row { background: rgba(30, 58, 138, 0.2); }
     tr.extra-care-row td { border-top: 1px dashed rgba(59, 130, 246, 0.4); }
 
     tr.extras-row { background: rgba(8, 145, 178, 0.15); }
     tr.extras-row td { border-top: 1px dashed rgba(6, 182, 212, 0.4); }
 
-    /* Type Tag & Category Tooltip Container */
     .type-tag-wrap {
       position: relative;
       display: inline-block;
@@ -814,7 +814,6 @@
     </div>
   </div>
 
-  <!-- Price Edit & Discount Slider Modal -->
   <div class="modal-overlay" id="priceEditModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -855,7 +854,6 @@
     </div>
   </div>
 
-  <!-- JB Hi-Fi Extras Plan Selection Modal -->
   <div class="modal-overlay" id="extrasPlanModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -874,7 +872,6 @@
     </div>
   </div>
 
-  <!-- Catalog Modal -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -923,9 +920,18 @@
     let pendingExtrasTargetId = null;
     let pendingExtrasPlans = null;
 
-    // Active tooltip tracking
     let activeTooltipTimer = null;
     let activeTooltipElement = null;
+
+    function normalizeType(rawType) {
+      if (!rawType) return "Works";
+      const str = String(rawType).trim().toLowerCase();
+      if (str.includes("primary")) return "Primary";
+      if (str.includes("look")) return "Looks";
+      if (str.includes("work")) return "Works";
+      if (str.includes("last")) return "Lasts";
+      return "Works";
+    }
 
     async function init() {
       const stored = localStorage.getItem("jb_attach_catalog_clean");
@@ -957,10 +963,12 @@
       Object.keys(catalog).forEach(key => {
         const item = catalog[key];
         const uniqueKey = item.sku || key;
+        const normalizedType = normalizeType(item.type);
         if (!seenSkus.has(uniqueKey)) {
           seenSkus.add(uniqueKey);
           searchIndex.push({
             ...item,
+            type: normalizedType,
             _lookupKey: key,
             _searchStr: `${item.name} ${item.sku} ${item.category || ""}`.toLowerCase()
           });
@@ -1075,13 +1083,11 @@
       });
     }
 
-    /* 2-Second Interactive Classification Category Tooltip */
     function toggleCategoryTooltip(event, categoryName) {
       event.stopPropagation();
       const wrap = event.currentTarget.closest(".type-tag-wrap");
       if (!wrap) return;
 
-      // If tooltip already exists on this tag, toggle off immediately
       const existing = wrap.querySelector(".category-tooltip");
       if (existing) {
         clearTimeout(activeTooltipTimer);
@@ -1090,7 +1096,6 @@
         return;
       }
 
-      // Remove any other tooltip open elsewhere
       if (activeTooltipElement) {
         clearTimeout(activeTooltipTimer);
         activeTooltipElement.remove();
@@ -1099,7 +1104,7 @@
 
       const tooltip = document.createElement("div");
       tooltip.className = "category-tooltip";
-      tooltip.textContent = categoryName || "Unclassified Category";
+      tooltip.textContent = categoryName || "General";
       wrap.appendChild(tooltip);
 
       activeTooltipElement = tooltip;
@@ -1118,7 +1123,7 @@
     });
 
     function escapeHTML(str) {
-      return String(str).replace(/[&<>'"]/g, 
+      return String(str || "").replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
       );
     }
@@ -1161,7 +1166,7 @@
 
       let item = catalog[val];
       if (!item) {
-        const foundPlu = Object.keys(catalog).find(k => catalog[k].sku.toLowerCase() === val.toLowerCase());
+        const foundPlu = Object.keys(catalog).find(k => String(catalog[k].sku).toLowerCase() === val.toLowerCase());
         if (foundPlu) {
           item = catalog[foundPlu];
           item._scannedPlu = foundPlu;
@@ -1187,7 +1192,8 @@
       lastScanTime = now;
       setTimeout(() => { isScanCoolingDown = false; }, 1000);
 
-      playBeep(item.type);
+      const resolvedType = normalizeType(item.type);
+      playBeep(resolvedType);
 
       const existing = basket.find(x => !x.isExtraCare && !x.isExtras && (x.plu === codeKey || x.sku === item.sku));
       if (existing) {
@@ -1197,10 +1203,10 @@
         basket.push({
           id: Date.now() + Math.random(),
           plu: codeKey,
-          sku: item.sku,
-          name: item.name,
+          sku: item.sku || codeKey,
+          name: item.name || "Unknown Product",
           category: item.category || "General",
-          type: item.type,
+          type: resolvedType,
           unitPrice: Number(item.price) || 0.00,
           originalUnitPrice: Number(item.price) || 0.00,
           qty: 1,
@@ -1253,45 +1259,37 @@
       renderBasket();
     }
 
-    /* JB HI-FI EXTRAS ELIGIBILITY ENGINE: STRICTLY CONSTRAINED TO PRIMARY ITEMS */
     function getExtrasOptions(item) {
-      // Must be an active basket item and must be classified as Primary
-      if (!item || item.isExtraCare || item.isExtras || item.type !== "Primary") {
-        return null;
-      }
+      if (!item || item.isExtraCare || item.isExtras) return null;
+      if (normalizeType(item.type) !== "Primary") return null;
 
-      const text = `${item.name} ${item.category}`.toLowerCase();
-      const p = item.unitPrice;
+      const text = `${item.name || ""} ${item.category || ""}`.toLowerCase();
+      const p = Number(item.unitPrice) || 0;
 
-      // 1. iPhones (Table 2a)[span_5](start_span)[span_5](end_span)
       if (text.includes("iphone") && !text.includes("case") && !text.includes("cable")) {
-        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };[span_6](start_span)[span_6](end_span)
-        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };[span_7](start_span)[span_7](end_span)
-        return { term: "24M", upfront: 349, monthly: 17.99 };[span_8](start_span)[span_8](end_span)
+        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };
+        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };
+        return { term: "24M", upfront: 349, monthly: 17.99 };
       }
 
-      // 2. iPads (Table 2a)[span_9](start_span)[span_9](end_span)
       if (text.includes("ipad") && !text.includes("case") && !text.includes("cover") && !text.includes("keyboard")) {
-        if (p < 1000) return { term: "24M", upfront: 139, monthly: 6.99 };[span_10](start_span)[span_10](end_span)
-        if (p < 2000) return { term: "24M", upfront: 239, monthly: 10.99 };[span_11](start_span)[span_11](end_span)
-        return { term: "24M", upfront: 269, monthly: 13.99 };[span_12](start_span)[span_12](end_span)
+        if (p < 1000) return { term: "24M", upfront: 139, monthly: 6.99 };
+        if (p < 2000) return { term: "24M", upfront: 239, monthly: 10.99 };
+        return { term: "24M", upfront: 269, monthly: 13.99 };
       }
 
-      // 3. MacBooks (Table 2a)[span_13](start_span)[span_13](end_span)
       if (text.includes("macbook") && !text.includes("sleeve") && !text.includes("shell") && !text.includes("bag")) {
-        if (p < 2000) return { term: "36M", upfront: 389, monthly: null };[span_14](start_span)[span_14](end_span)
-        if (p < 3000) return { term: "36M", upfront: 489, monthly: null };[span_15](start_span)[span_15](end_span)
-        return { term: "36M", upfront: 589, monthly: null };[span_16](start_span)[span_16](end_span)
+        if (p < 2000) return { term: "36M", upfront: 389, monthly: null };
+        if (p < 3000) return { term: "36M", upfront: 489, monthly: null };
+        return { term: "36M", upfront: 589, monthly: null };
       }
 
-      // 4. iMac, Mac mini, Mac Studio (Table 2a)[span_17](start_span)[span_17](end_span)
       if (text.includes("imac") || text.includes("mac mini") || text.includes("mac studio")) {
-        if (p < 2000) return { term: "36M", upfront: 189, monthly: null };[span_18](start_span)[span_18](end_span)
-        if (p < 3000) return { term: "36M", upfront: 289, monthly: null };[span_19](start_span)[span_19](end_span)
-        return { term: "36M", upfront: 489, monthly: null };[span_20](start_span)[span_20](end_span)
+        if (p < 2000) return { term: "36M", upfront: 189, monthly: null };
+        if (p < 3000) return { term: "36M", upfront: 289, monthly: null };
+        return { term: "36M", upfront: 489, monthly: null };
       }
 
-      // 5. Android and Non-Apple Smartphones (Table 2b)[span_21](start_span)[span_21](end_span)
       const isSmartphone = (
         text.includes("galaxy s") || text.includes("galaxy z") || text.includes("galaxy a") || 
         text.includes("pixel ") || text.includes("motorola") || text.includes("oppo") ||
@@ -1299,38 +1297,35 @@
         (text.includes("phone") && !text.includes("case") && !text.includes("cordless"))
       );
       if (isSmartphone) {
-        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };[span_22](start_span)[span_22](end_span)
-        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };[span_23](start_span)[span_23](end_span)
-        return { term: "24M", upfront: 349, monthly: 17.99 };[span_24](start_span)[span_24](end_span)
+        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };
+        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };
+        return { term: "24M", upfront: 349, monthly: 17.99 };
       }
 
-      // 6. Tablets Non-Apple (Table 2b)[span_25](start_span)[span_25](end_span)
       if (text.includes("tablet") || text.includes("galaxy tab") || text.includes("lenovo tab")) {
         if (!text.includes("case") && !text.includes("screen") && !text.includes("cover")) {
-          if (p < 250) return { term: "24M", upfront: 49, monthly: null };[span_26](start_span)[span_26](end_span)
-          if (p < 500) return { term: "24M", upfront: 99, monthly: null };[span_27](start_span)[span_27](end_span)
-          if (p < 1000) return { term: "24M", upfront: 139, monthly: null };[span_28](start_span)[span_28](end_span)
-          if (p < 2000) return { term: "24M", upfront: 239, monthly: null };[span_29](start_span)[span_29](end_span)
-          return { term: "24M", upfront: 269, monthly: null };[span_30](start_span)[span_30](end_span)
+          if (p < 250) return { term: "24M", upfront: 49, monthly: null };
+          if (p < 500) return { term: "24M", upfront: 99, monthly: null };
+          if (p < 1000) return { term: "24M", upfront: 139, monthly: null };
+          if (p < 2000) return { term: "24M", upfront: 239, monthly: null };
+          return { term: "24M", upfront: 269, monthly: null };
         }
       }
 
-      // 7. Windows & Chrome OS Laptops (Table 2b)[span_31](start_span)[span_31](end_span)
       if (text.includes("laptop") || text.includes("chromebook") || text.includes("ideapad") || text.includes("zenbook") || text.includes("omnibook") || text.includes("vivobook")) {
         if (!text.includes("bag") && !text.includes("sleeve") && !text.includes("stand")) {
-          if (p < 1000) return { term: "36M", upfront: 279, monthly: null };[span_32](start_span)[span_32](end_span)
-          if (p < 2000) return { term: "36M", upfront: 389, monthly: null };[span_33](start_span)[span_33](end_span)
-          if (p < 3000) return { term: "36M", upfront: 489, monthly: null };[span_34](start_span)[span_34](end_span)
-          return { term: "36M", upfront: 589, monthly: null };[span_35](start_span)[span_35](end_span)
+          if (p < 1000) return { term: "36M", upfront: 279, monthly: null };
+          if (p < 2000) return { term: "36M", upfront: 389, monthly: null };
+          if (p < 3000) return { term: "36M", upfront: 489, monthly: null };
+          return { term: "36M", upfront: 589, monthly: null };
         }
       }
 
-      // 8. Portable Gaming Consoles (Table 2b)[span_36](start_span)[span_36](end_span)
       if (text.includes("switch") || text.includes("switch 2") || text.includes("portal") || text.includes("steam deck") || text.includes("rog ally") || text.includes("claw")) {
         if (text.includes("console") || text.includes("handheld") || text.includes("player")) {
-          if (p < 500) return { term: "24M", upfront: 109, monthly: null };[span_37](start_span)[span_37](end_span)
-          if (p < 1000) return { term: "24M", upfront: 199, monthly: null };[span_38](start_span)[span_38](end_span)
-          return { term: "24M", upfront: 349, monthly: null };[span_39](start_span)[span_39](end_span)
+          if (p < 500) return { term: "24M", upfront: 109, monthly: null };
+          if (p < 1000) return { term: "24M", upfront: 199, monthly: null };
+          return { term: "24M", upfront: 349, monthly: null };
         }
       }
 
@@ -1354,7 +1349,6 @@
 
       document.getElementById("extrasTargetTitle").textContent = `${item.name} ($${item.unitPrice.toFixed(2)})`;
       const container = document.getElementById("extrasOptionContainer");
-      
       const subValue = Math.round((planInfo.monthly * 10) * 100) / 100;
 
       container.innerHTML = `
@@ -1685,29 +1679,32 @@
         totalBasketDollars += lineTotal;
         totalUnits += item.qty;
 
-        if (item.type === "Primary") {
+        const resolvedType = normalizeType(item.type);
+
+        if (resolvedType === "Primary") {
           primaryUnits += item.qty;
         } else {
           attachUnits += item.qty;
           if (item.isExtraCare || item.isExtras) hasAnyProtection = true;
 
-          if (item.type === "Looks") { looksTotal += lineTotal; looksItems += item.qty; }
-          if (item.type === "Works") { worksTotal += lineTotal; worksItems += item.qty; }
-          if (item.type === "Lasts") { lastsTotal += lineTotal; lastsItems += item.qty; }
+          if (resolvedType === "Looks") { looksTotal += lineTotal; looksItems += item.qty; }
+          if (resolvedType === "Works") { worksTotal += lineTotal; worksItems += item.qty; }
+          if (resolvedType === "Lasts") { lastsTotal += lineTotal; lastsItems += item.qty; }
         }
 
         const tr = document.createElement("tr");
+        if (resolvedType === "Primary") tr.className = "primary-row";
+
         const hasDiscount = item.originalUnitPrice && item.unitPrice < item.originalUnitPrice;
         const priceDisplay = hasDiscount 
           ? `<span class="strike-price">$${(item.originalUnitPrice * item.qty).toFixed(2)}</span>$${lineTotal.toFixed(2)}`
           : `$${lineTotal.toFixed(2)}`;
 
-        // Interactive Tooltip wrapper markup
         const categoryEscaped = escapeHTML(item.category || "General");
         const tagWrapHtml = `
           <div class="type-tag-wrap">
-            <span class="type-tag tag-${item.type.toLowerCase()}" onclick="toggleCategoryTooltip(event, '${categoryEscaped}')">
-              ${item.type}
+            <span class="type-tag tag-${resolvedType.toLowerCase()}" onclick="toggleCategoryTooltip(event, '${categoryEscaped}')">
+              ${resolvedType}
             </span>
           </div>
         `;
@@ -1754,14 +1751,12 @@
             </td>
           `;
         } else {
-          // Extra Care Button
           const careBtnHtml = !item.hasExtraCare && item.unitPrice > 0 ? `
             <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care">
               🛡️ + Care
             </button>
           ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 4px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
 
-          // JB Hi-Fi Extras Button (STRICTLY ON PRIMARY HARDWARE ITEMS)
           const extrasEligible = getExtrasOptions(item);
           let extrasBtnHtml = "";
           if (extrasEligible && !item.hasExtras) {
@@ -1915,10 +1910,11 @@
         gain.connect(ctx.destination);
 
         let freq = 1200;
-        if (type === "Primary") freq = 880;
-        else if (type === "Lasts") freq = 1760;
-        else if (type === "Works") freq = 1480;
-        else if (type === "Looks") freq = 1320;
+        const norm = normalizeType(type);
+        if (norm === "Primary") freq = 880;
+        else if (norm === "Lasts") freq = 1760;
+        else if (norm === "Works") freq = 1480;
+        else if (norm === "Looks") freq = 1320;
         else if (type === "Reject") freq = 320;
 
         osc.type = type === "Reject" ? "sawtooth" : "sine";
@@ -1947,13 +1943,14 @@
       tbody.innerHTML = "";
       Object.keys(catalog).forEach(plu => {
         const item = catalog[plu];
+        const normType = normalizeType(item.type);
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td style="font-family: monospace;">${plu}</td>
           <td style="font-family: monospace;">${item.sku}</td>
           <td>${item.name}</td>
-          <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
-          <td>$${item.price.toFixed(2)}</td>
+          <td><span class="type-tag tag-${normType.toLowerCase()}">${normType}</span></td>
+          <td>$${Number(item.price).toFixed(2)}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1997,17 +1994,13 @@
         const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ''));
         if (cols.length >= 6) {
           const [plu, sku, name, category, rawType, priceStr] = cols;
-          let type = "Primary";
-          const lower = rawType.toLowerCase();
-          if (lower.includes("look")) type = "Looks";
-          else if (lower.includes("work")) type = "Works";
-          else if (lower.includes("last")) type = "Lasts";
+          const normType = normalizeType(rawType);
 
           catalog[plu] = {
             sku: sku || plu,
             name: name,
             category: category,
-            type: type,
+            type: normType,
             price: parseFloat(priceStr) || 0.00
           };
           count++;
