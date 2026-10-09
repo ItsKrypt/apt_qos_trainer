@@ -24,6 +24,9 @@
       --color-looks-bg: rgba(239, 68, 68, 0.15);
       --color-works-bg: rgba(34, 197, 94, 0.15);
       --color-lasts-bg: rgba(59, 130, 246, 0.15);
+
+      --color-extras: #06b6d4;
+      --color-extras-bg: rgba(6, 182, 212, 0.18);
     }
 
     * {
@@ -119,6 +122,19 @@
     }
     .btn-care:hover { background: #3b82f6; color: #fff; }
 
+    .btn-extras {
+      background: var(--color-extras-bg);
+      color: #67e8f9;
+      border: 1px solid var(--color-extras);
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 38px;
+    }
+    .btn-extras:hover { background: var(--color-extras); color: #000; }
+
     .scan-card {
       background: var(--card-bg);
       padding: 16px;
@@ -156,7 +172,6 @@
     }
     .scan-input:focus { border-color: var(--accent-yellow); }
 
-    /* Live Search Dropdown Suggestions */
     .search-dropdown {
       position: absolute;
       top: calc(100% + 4px);
@@ -371,7 +386,6 @@
     .metric-works { border-left-color: var(--color-works); }
     .metric-lasts { border-left-color: var(--color-lasts); }
 
-    /* Proportional Horizontal Fill Layer for Individual Cards */
     .metric-fill-bar {
       position: absolute;
       top: 0;
@@ -450,20 +464,66 @@
     tr.extra-care-row { background: rgba(30, 58, 138, 0.2); }
     tr.extra-care-row td { border-top: 1px dashed rgba(59, 130, 246, 0.4); }
 
+    tr.extras-row { background: rgba(8, 145, 178, 0.15); }
+    tr.extras-row td { border-top: 1px dashed rgba(6, 182, 212, 0.4); }
+
+    /* Type Tag & Category Tooltip Container */
+    .type-tag-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
     .type-tag {
-      padding: 2px 6px;
+      padding: 3px 7px;
       border-radius: 4px;
       font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
       display: inline-block;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s, transform 0.05s;
     }
+    .type-tag:hover { opacity: 0.85; }
+    .type-tag:active { transform: scale(0.95); }
+
     .tag-primary { background: #581c87; color: #f3e8ff; }
     .tag-looks { background: #7f1d1d; color: #fee2e2; }
     .tag-works { background: #14532d; color: #dcfce7; }
     .tag-lasts { background: #1e3a8a; color: #dbeafe; }
 
-    /* Quantity Stepper Component */
+    .category-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      background: #020617;
+      color: var(--accent-yellow);
+      border: 1px solid #475569;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+      animation: fadeInTooltip 0.15s ease-out;
+    }
+    .category-tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 14px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #020617 transparent transparent transparent;
+    }
+
+    @keyframes fadeInTooltip {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .qty-controls {
       display: inline-flex;
       align-items: center;
@@ -516,7 +576,6 @@
       margin-right: 4px;
     }
 
-    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -593,6 +652,22 @@
       border-radius: 50%;
       background: var(--accent-yellow);
       cursor: pointer;
+    }
+
+    .extras-option-card {
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .extras-option-card:hover {
+      border-color: var(--color-extras);
+      background: rgba(6, 182, 212, 0.08);
     }
 
     @media (max-width: 768px) {
@@ -739,6 +814,7 @@
     </div>
   </div>
 
+  <!-- Price Edit & Discount Slider Modal -->
   <div class="modal-overlay" id="priceEditModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -779,6 +855,26 @@
     </div>
   </div>
 
+  <!-- JB Hi-Fi Extras Plan Selection Modal -->
+  <div class="modal-overlay" id="extrasPlanModal">
+    <div class="edit-modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h3 style="font-size: 1rem; color: #67e8f9;">✨ Select JB Hi-Fi Extras Plan</h3>
+          <p id="extrasTargetTitle" style="color: var(--text-muted); font-size: 0.78rem; margin-top: 2px;">Device</p>
+        </div>
+        <button class="btn-icon" onclick="closeExtrasModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;" id="extrasOptionContainer"></div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+        <button class="btn" onclick="closeExtrasModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Catalog Modal -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -823,6 +919,13 @@
     let isScanCoolingDown = false;
     let editingItemId = null;
     let toastTimeout = null;
+
+    let pendingExtrasTargetId = null;
+    let pendingExtrasPlans = null;
+
+    // Active tooltip tracking
+    let activeTooltipTimer = null;
+    let activeTooltipElement = null;
 
     async function init() {
       const stored = localStorage.getItem("jb_attach_catalog_clean");
@@ -972,6 +1075,48 @@
       });
     }
 
+    /* 2-Second Interactive Classification Category Tooltip */
+    function toggleCategoryTooltip(event, categoryName) {
+      event.stopPropagation();
+      const wrap = event.currentTarget.closest(".type-tag-wrap");
+      if (!wrap) return;
+
+      // If tooltip already exists on this tag, toggle off immediately
+      const existing = wrap.querySelector(".category-tooltip");
+      if (existing) {
+        clearTimeout(activeTooltipTimer);
+        existing.remove();
+        activeTooltipElement = null;
+        return;
+      }
+
+      // Remove any other tooltip open elsewhere
+      if (activeTooltipElement) {
+        clearTimeout(activeTooltipTimer);
+        activeTooltipElement.remove();
+        activeTooltipElement = null;
+      }
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "category-tooltip";
+      tooltip.textContent = categoryName || "Unclassified Category";
+      wrap.appendChild(tooltip);
+
+      activeTooltipElement = tooltip;
+      activeTooltipTimer = setTimeout(() => {
+        if (tooltip) tooltip.remove();
+        activeTooltipElement = null;
+      }, 2000);
+    }
+
+    document.addEventListener("click", () => {
+      if (activeTooltipElement) {
+        clearTimeout(activeTooltipTimer);
+        activeTooltipElement.remove();
+        activeTooltipElement = null;
+      }
+    });
+
     function escapeHTML(str) {
       return String(str).replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
@@ -1001,18 +1146,13 @@
       document.getElementById("toastBanner").style.display = "none";
     }
 
-    /* Core Scan Processor with 1-Second Global Cooldown & Double-Scan Blocker */
     function processCode(val) {
       if (!val) return;
       val = val.trim();
       const now = Date.now();
 
-      // 1. HARD 1-SECOND GLOBAL COOLDOWN
-      if (isScanCoolingDown || (now - lastScanTime) < 1000) {
-        return;
-      }
+      if (isScanCoolingDown || (now - lastScanTime) < 1000) return;
 
-      // 2. ACCIDENTAL REPEAT GUARD (2.5s window for exact same item)
       if (val === lastScannedCode && (now - lastScanTime) < 2500) {
         showToast(`⚠️ Duplicate scan rejected: ${val}. Use + to change qty.`, true);
         playBeep("Reject");
@@ -1049,7 +1189,7 @@
 
       playBeep(item.type);
 
-      const existing = basket.find(x => !x.isExtraCare && (x.plu === codeKey || x.sku === item.sku));
+      const existing = basket.find(x => !x.isExtraCare && !x.isExtras && (x.plu === codeKey || x.sku === item.sku));
       if (existing) {
         adjustQty(existing.id, 1);
         showToast(`✓ Increased quantity: ${item.name}`);
@@ -1059,13 +1199,15 @@
           plu: codeKey,
           sku: item.sku,
           name: item.name,
-          category: item.category,
+          category: item.category || "General",
           type: item.type,
           unitPrice: Number(item.price) || 0.00,
           originalUnitPrice: Number(item.price) || 0.00,
           qty: 1,
           isExtraCare: false,
-          hasExtraCare: false
+          hasExtraCare: false,
+          isExtras: false,
+          hasExtras: false
         });
         showToast(`✓ Added: ${item.name}`);
         renderBasket();
@@ -1103,13 +1245,211 @@
         const ecItem = basket.find(x => x.isExtraCare && x.parentId === item.id);
         if (ecItem) ecItem.qty = newQty;
       }
+      if (item.hasExtras) {
+        const exItem = basket.find(x => x.isExtras && x.parentId === item.id);
+        if (exItem) exItem.qty = newQty;
+      }
 
       renderBasket();
     }
 
+    /* JB HI-FI EXTRAS ELIGIBILITY ENGINE: STRICTLY CONSTRAINED TO PRIMARY ITEMS */
+    function getExtrasOptions(item) {
+      // Must be an active basket item and must be classified as Primary
+      if (!item || item.isExtraCare || item.isExtras || item.type !== "Primary") {
+        return null;
+      }
+
+      const text = `${item.name} ${item.category}`.toLowerCase();
+      const p = item.unitPrice;
+
+      // 1. iPhones (Table 2a)[span_5](start_span)[span_5](end_span)
+      if (text.includes("iphone") && !text.includes("case") && !text.includes("cable")) {
+        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };[span_6](start_span)[span_6](end_span)
+        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };[span_7](start_span)[span_7](end_span)
+        return { term: "24M", upfront: 349, monthly: 17.99 };[span_8](start_span)[span_8](end_span)
+      }
+
+      // 2. iPads (Table 2a)[span_9](start_span)[span_9](end_span)
+      if (text.includes("ipad") && !text.includes("case") && !text.includes("cover") && !text.includes("keyboard")) {
+        if (p < 1000) return { term: "24M", upfront: 139, monthly: 6.99 };[span_10](start_span)[span_10](end_span)
+        if (p < 2000) return { term: "24M", upfront: 239, monthly: 10.99 };[span_11](start_span)[span_11](end_span)
+        return { term: "24M", upfront: 269, monthly: 13.99 };[span_12](start_span)[span_12](end_span)
+      }
+
+      // 3. MacBooks (Table 2a)[span_13](start_span)[span_13](end_span)
+      if (text.includes("macbook") && !text.includes("sleeve") && !text.includes("shell") && !text.includes("bag")) {
+        if (p < 2000) return { term: "36M", upfront: 389, monthly: null };[span_14](start_span)[span_14](end_span)
+        if (p < 3000) return { term: "36M", upfront: 489, monthly: null };[span_15](start_span)[span_15](end_span)
+        return { term: "36M", upfront: 589, monthly: null };[span_16](start_span)[span_16](end_span)
+      }
+
+      // 4. iMac, Mac mini, Mac Studio (Table 2a)[span_17](start_span)[span_17](end_span)
+      if (text.includes("imac") || text.includes("mac mini") || text.includes("mac studio")) {
+        if (p < 2000) return { term: "36M", upfront: 189, monthly: null };[span_18](start_span)[span_18](end_span)
+        if (p < 3000) return { term: "36M", upfront: 289, monthly: null };[span_19](start_span)[span_19](end_span)
+        return { term: "36M", upfront: 489, monthly: null };[span_20](start_span)[span_20](end_span)
+      }
+
+      // 5. Android and Non-Apple Smartphones (Table 2b)[span_21](start_span)[span_21](end_span)
+      const isSmartphone = (
+        text.includes("galaxy s") || text.includes("galaxy z") || text.includes("galaxy a") || 
+        text.includes("pixel ") || text.includes("motorola") || text.includes("oppo") ||
+        text.includes("honor") || text.includes("nothing phone") || text.includes("smartphone") ||
+        (text.includes("phone") && !text.includes("case") && !text.includes("cordless"))
+      );
+      if (isSmartphone) {
+        if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };[span_22](start_span)[span_22](end_span)
+        if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };[span_23](start_span)[span_23](end_span)
+        return { term: "24M", upfront: 349, monthly: 17.99 };[span_24](start_span)[span_24](end_span)
+      }
+
+      // 6. Tablets Non-Apple (Table 2b)[span_25](start_span)[span_25](end_span)
+      if (text.includes("tablet") || text.includes("galaxy tab") || text.includes("lenovo tab")) {
+        if (!text.includes("case") && !text.includes("screen") && !text.includes("cover")) {
+          if (p < 250) return { term: "24M", upfront: 49, monthly: null };[span_26](start_span)[span_26](end_span)
+          if (p < 500) return { term: "24M", upfront: 99, monthly: null };[span_27](start_span)[span_27](end_span)
+          if (p < 1000) return { term: "24M", upfront: 139, monthly: null };[span_28](start_span)[span_28](end_span)
+          if (p < 2000) return { term: "24M", upfront: 239, monthly: null };[span_29](start_span)[span_29](end_span)
+          return { term: "24M", upfront: 269, monthly: null };[span_30](start_span)[span_30](end_span)
+        }
+      }
+
+      // 7. Windows & Chrome OS Laptops (Table 2b)[span_31](start_span)[span_31](end_span)
+      if (text.includes("laptop") || text.includes("chromebook") || text.includes("ideapad") || text.includes("zenbook") || text.includes("omnibook") || text.includes("vivobook")) {
+        if (!text.includes("bag") && !text.includes("sleeve") && !text.includes("stand")) {
+          if (p < 1000) return { term: "36M", upfront: 279, monthly: null };[span_32](start_span)[span_32](end_span)
+          if (p < 2000) return { term: "36M", upfront: 389, monthly: null };[span_33](start_span)[span_33](end_span)
+          if (p < 3000) return { term: "36M", upfront: 489, monthly: null };[span_34](start_span)[span_34](end_span)
+          return { term: "36M", upfront: 589, monthly: null };[span_35](start_span)[span_35](end_span)
+        }
+      }
+
+      // 8. Portable Gaming Consoles (Table 2b)[span_36](start_span)[span_36](end_span)
+      if (text.includes("switch") || text.includes("switch 2") || text.includes("portal") || text.includes("steam deck") || text.includes("rog ally") || text.includes("claw")) {
+        if (text.includes("console") || text.includes("handheld") || text.includes("player")) {
+          if (p < 500) return { term: "24M", upfront: 109, monthly: null };[span_37](start_span)[span_37](end_span)
+          if (p < 1000) return { term: "24M", upfront: 199, monthly: null };[span_38](start_span)[span_38](end_span)
+          return { term: "24M", upfront: 349, monthly: null };[span_39](start_span)[span_39](end_span)
+        }
+      }
+
+      return null;
+    }
+
+    function openExtrasModal(targetItemId) {
+      const item = basket.find(x => x.id === targetItemId);
+      if (!item) return;
+
+      const planInfo = getExtrasOptions(item);
+      if (!planInfo) return;
+
+      pendingExtrasTargetId = targetItemId;
+      pendingExtrasPlans = planInfo;
+
+      if (!planInfo.monthly) {
+        applyExtrasPlan(false);
+        return;
+      }
+
+      document.getElementById("extrasTargetTitle").textContent = `${item.name} ($${item.unitPrice.toFixed(2)})`;
+      const container = document.getElementById("extrasOptionContainer");
+      
+      const subValue = Math.round((planInfo.monthly * 10) * 100) / 100;
+
+      container.innerHTML = `
+        <div class="extras-option-card" onclick="applyExtrasPlan(false)">
+          <div>
+            <div style="font-weight: 800; color: #fff;">${planInfo.term} Upfront Membership Plan</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">One-time payment upfront (PG 1226)</div>
+          </div>
+          <div style="font-size: 1.15rem; font-weight: 900; color: var(--color-extras);">$${planInfo.upfront.toFixed(2)}</div>
+        </div>
+
+        <div class="extras-option-card" onclick="applyExtrasPlan(true)">
+          <div>
+            <div style="font-weight: 800; color: #fff;">Monthly Commitment Subscription</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">$${planInfo.monthly.toFixed(2)}/mo • (10× Value: $${subValue.toFixed(2)} Lasts Attach)</div>
+          </div>
+          <div style="font-size: 1.15rem; font-weight: 900; color: #38bdf8;">$${planInfo.monthly.toFixed(2)}<span style="font-size: 0.72rem; color: #94a3b8;">/mo</span></div>
+        </div>
+      `;
+
+      document.getElementById("extrasPlanModal").style.display = "flex";
+    }
+
+    function closeExtrasModal() {
+      document.getElementById("extrasPlanModal").style.display = "none";
+      pendingExtrasTargetId = null;
+      pendingExtrasPlans = null;
+    }
+
+    function applyExtrasPlan(isSubscription) {
+      const targetItem = basket.find(x => x.id === pendingExtrasTargetId);
+      if (!targetItem || !pendingExtrasPlans) {
+        closeExtrasModal();
+        return;
+      }
+
+      const planInfo = pendingExtrasPlans;
+      targetItem.hasExtras = true;
+
+      const attachValue = isSubscription ? Math.round((planInfo.monthly * 10) * 100) / 100 : planInfo.upfront;
+      const skuTag = isSubscription ? "EXTRAS-SUB" : "EXTRAS-UPFRONT";
+      const planLabel = isSubscription 
+        ? `JB Hi-Fi Extras ($${planInfo.monthly.toFixed(2)}/mo)` 
+        : `JB Hi-Fi Extras (${planInfo.term} Upfront)`;
+
+      const extrasItem = {
+        id: Date.now() + Math.random(),
+        parentId: targetItem.id,
+        plu: skuTag,
+        sku: skuTag,
+        name: planLabel,
+        attachedToName: targetItem.name,
+        category: isSubscription ? "Mobile Extras - Subscription (PG 1225)" : "Mobile Extras - Upfront (PG 1226)",
+        type: "Lasts",
+        unitPrice: attachValue,
+        originalUnitPrice: attachValue,
+        isSubscription: isSubscription,
+        monthlyRate: isSubscription ? planInfo.monthly : 0,
+        qty: targetItem.qty,
+        isExtraCare: false,
+        isExtras: true
+      };
+
+      const parentIdx = basket.findIndex(x => x.id === targetItem.id);
+      basket.splice(parentIdx + 1, 0, extrasItem);
+
+      playBeep("Lasts");
+      showToast(`✨ Attached ${planLabel} to ${targetItem.name}`);
+      closeExtrasModal();
+      renderBasket();
+    }
+
+    function recalculateLinkedExtras(parentId, newParentUnitPrice) {
+      const exItem = basket.find(item => item.isExtras && item.parentId === parentId);
+      const parentItem = basket.find(item => item.id === parentId);
+      if (!exItem || !parentItem) return;
+
+      const dummyParent = { ...parentItem, unitPrice: newParentUnitPrice };
+      const newPlan = getExtrasOptions(dummyParent);
+      if (!newPlan) return;
+
+      if (exItem.isSubscription && newPlan.monthly) {
+        const newAttachVal = Math.round((newPlan.monthly * 10) * 100) / 100;
+        exItem.unitPrice = newAttachVal;
+        exItem.monthlyRate = newPlan.monthly;
+        exItem.name = `JB Hi-Fi Extras ($${newPlan.monthly.toFixed(2)}/mo)`;
+      } else {
+        exItem.unitPrice = newPlan.upfront;
+        exItem.name = `JB Hi-Fi Extras (${newPlan.term} Upfront)`;
+      }
+    }
+
     function attachExtraCare(targetItemId) {
       const targetItem = basket.find(item => item.id === targetItemId);
-      if (!targetItem || targetItem.isExtraCare || targetItem.hasExtraCare) return;
+      if (!targetItem || targetItem.isExtraCare || targetItem.isExtras || targetItem.hasExtraCare) return;
 
       const unitPrice = targetItem.unitPrice;
       const isReplaceTier = unitPrice <= 1000;
@@ -1132,7 +1472,8 @@
         unitPrice: ecUnitPrice,
         originalUnitPrice: ecUnitPrice,
         qty: targetItem.qty,
-        isExtraCare: true
+        isExtraCare: true,
+        isExtras: false
       };
 
       const parentIdx = basket.findIndex(item => item.id === targetItemId);
@@ -1243,6 +1584,9 @@
       if (item.hasExtraCare) {
         recalculateLinkedExtraCare(item.id, item.unitPrice);
       }
+      if (item.hasExtras) {
+        recalculateLinkedExtras(item.id, item.unitPrice);
+      }
 
       closePriceEditModal();
       renderBasket();
@@ -1306,6 +1650,10 @@
         const parentItem = basket.find(x => x.id === itemToRemove.parentId);
         if (parentItem) parentItem.hasExtraCare = false;
         basket = basket.filter(x => x.id !== id);
+      } else if (itemToRemove.isExtras) {
+        const parentItem = basket.find(x => x.id === itemToRemove.parentId);
+        if (parentItem) parentItem.hasExtras = false;
+        basket = basket.filter(x => x.id !== id);
       } else {
         basket = basket.filter(x => x.id !== id && x.parentId !== id);
       }
@@ -1327,7 +1675,7 @@
       let attachUnits = 0;
       let totalUnits = 0;
       let totalBasketDollars = 0;
-      let hasAnyExtraCare = false;
+      let hasAnyProtection = false;
 
       let looksTotal = 0, worksTotal = 0, lastsTotal = 0;
       let looksItems = 0, worksItems = 0, lastsItems = 0;
@@ -1341,7 +1689,7 @@
           primaryUnits += item.qty;
         } else {
           attachUnits += item.qty;
-          if (item.isExtraCare) hasAnyExtraCare = true;
+          if (item.isExtraCare || item.isExtras) hasAnyProtection = true;
 
           if (item.type === "Looks") { looksTotal += lineTotal; looksItems += item.qty; }
           if (item.type === "Works") { worksTotal += lineTotal; worksItems += item.qty; }
@@ -1354,10 +1702,20 @@
           ? `<span class="strike-price">$${(item.originalUnitPrice * item.qty).toFixed(2)}</span>$${lineTotal.toFixed(2)}`
           : `$${lineTotal.toFixed(2)}`;
 
+        // Interactive Tooltip wrapper markup
+        const categoryEscaped = escapeHTML(item.category || "General");
+        const tagWrapHtml = `
+          <div class="type-tag-wrap">
+            <span class="type-tag tag-${item.type.toLowerCase()}" onclick="toggleCategoryTooltip(event, '${categoryEscaped}')">
+              ${item.type}
+            </span>
+          </div>
+        `;
+
         if (item.isExtraCare) {
           tr.className = "extra-care-row";
           tr.innerHTML = `
-            <td><span class="type-tag tag-lasts">LASTS</span></td>
+            <td>${tagWrapHtml}</td>
             <td style="font-weight: 600; color: #93c5fd;">
               ↳ 🛡️ ${item.name}
               <div style="font-size: 0.74rem; color: #94a3b8; font-weight: normal;">
@@ -1371,15 +1729,53 @@
               <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Care">🗑️</button>
             </td>
           `;
+        } else if (item.isExtras) {
+          tr.className = "extras-row";
+          const subInfo = item.isSubscription ? `<span style="font-size: 0.72rem; color: #67e8f9; font-weight: 700;">($${item.monthlyRate.toFixed(2)}/mo • 10x Attach Val)</span>` : "";
+          tr.innerHTML = `
+            <td>
+              <div class="type-tag-wrap">
+                <span class="type-tag tag-lasts" style="background: rgba(6,182,212,0.25); color: #67e8f9; border: 1px solid #06b6d4;" onclick="toggleCategoryTooltip(event, '${categoryEscaped}')">
+                  LASTS
+                </span>
+              </div>
+            </td>
+            <td style="font-weight: 600; color: #67e8f9;">
+              ↳ ✨ ${item.name} ${subInfo}
+              <div style="font-size: 0.74rem; color: #94a3b8; font-weight: normal;">
+                Linked to: <strong style="color: #cbd5e1;">${item.attachedToName}</strong>
+              </div>
+            </td>
+            <td style="text-align: center;"><span style="font-weight: 800; color: #67e8f9;">${item.qty}</span></td>
+            <td style="color: var(--text-muted);">${item.category}</td>
+            <td style="font-weight: 700; color: #67e8f9;">${priceDisplay}</td>
+            <td style="text-align: right;">
+              <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove Extras">🗑️</button>
+            </td>
+          `;
         } else {
+          // Extra Care Button
           const careBtnHtml = !item.hasExtraCare && item.unitPrice > 0 ? `
             <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care">
               🛡️ + Care
             </button>
           ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 4px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
 
+          // JB Hi-Fi Extras Button (STRICTLY ON PRIMARY HARDWARE ITEMS)
+          const extrasEligible = getExtrasOptions(item);
+          let extrasBtnHtml = "";
+          if (extrasEligible && !item.hasExtras) {
+            extrasBtnHtml = `
+              <button class="btn-extras" onclick="openExtrasModal(${item.id})" title="Attach JB Hi-Fi Extras">
+                ✨ + Extras
+              </button>
+            `;
+          } else if (item.hasExtras) {
+            extrasBtnHtml = `<span style="font-size: 0.72rem; color: #67e8f9; font-weight: 800; background: rgba(6,182,212,0.15); padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.4);">✨ Extras Active</span>`;
+          }
+
           tr.innerHTML = `
-            <td><span class="type-tag tag-${item.type.toLowerCase()}">${item.type}</span></td>
+            <td>${tagWrapHtml}</td>
             <td style="font-weight: 600;">
               ${item.name}
               <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">${item.sku}</div>
@@ -1396,6 +1792,7 @@
             <td style="text-align: right;">
               <div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
                 ${careBtnHtml}
+                ${extrasBtnHtml}
                 <button class="btn-icon" onclick="openPriceEditModal(${item.id})" title="Discount">✏️</button>
                 <button class="btn-icon del" onclick="removeItem(${item.id})" title="Remove">🗑️</button>
               </div>
@@ -1438,7 +1835,6 @@
         segWorks.style.width = wPct + "%";
         segLasts.style.width = ltPct + "%";
 
-        // Align each individual card's fill bar to the exact same width as the top bar
         cardFillLooks.style.width = lPct + "%";
         cardFillWorks.style.width = wPct + "%";
         cardFillLasts.style.width = ltPct + "%";
@@ -1495,8 +1891,8 @@
 
         if (totalUnits === 1) {
           coach.innerHTML = "⚪ <strong>Single Item Sale (1.0 IPS):</strong> Lone accessory sold. Look for natural links (e.g. cable with charger).";
-        } else if (totalUnits >= 2 && hasAnyExtraCare) {
-          coach.innerHTML = "💎 <strong style='color:#38bdf8;'>Elite Multi-Item Basket (" + totalUnits + ".0 IPS + Care):</strong> High-value add-on sale with protection!";
+        } else if (totalUnits >= 2 && hasAnyProtection) {
+          coach.innerHTML = "💎 <strong style='color:#38bdf8;'>Elite Multi-Item Basket (" + totalUnits + ".0 IPS + Protection):</strong> High-value add-on sale with Lasts cover!";
         } else if (totalUnits >= 2) {
           coach.innerHTML = "🟢 <strong style='color:#4ade80;'>Strong Multi-Item Sale (" + totalUnits + ".0 IPS):</strong> Solid accessory basket building.";
         }
