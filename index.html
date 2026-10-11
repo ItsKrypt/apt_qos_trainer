@@ -814,6 +814,7 @@
     </div>
   </div>
 
+  <!-- Price Edit & Discount Slider Modal -->
   <div class="modal-overlay" id="priceEditModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -854,6 +855,7 @@
     </div>
   </div>
 
+  <!-- JB Hi-Fi Extras Plan Selection Modal -->
   <div class="modal-overlay" id="extrasPlanModal">
     <div class="edit-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -872,6 +874,7 @@
     </div>
   </div>
 
+  <!-- Catalog Modal -->
   <div class="modal-overlay" id="catalogModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -1259,37 +1262,71 @@
       renderBasket();
     }
 
+    /* =========================================================================
+       JB HI-FI EXTRAS ELIGIBILITY & PRICING ENGINE
+       Includes Primary Hardware + Headphone/Earphone Table 2a & 2b Tiers
+       ========================================================================= */
     function getExtrasOptions(item) {
       if (!item || item.isExtraCare || item.isExtras) return null;
-      if (normalizeType(item.type) !== "Primary") return null;
 
       const text = `${item.name || ""} ${item.category || ""}`.toLowerCase();
       const p = Number(item.unitPrice) || 0;
+      const isPrimary = normalizeType(item.type) === "Primary";
 
+      // 1. Apple & Beats Headphones / Earphones (Table 2a - 24M Upfront only)
+      const isAppleAudio = (text.includes("airpod") || text.includes("beats")) &&
+        (text.includes("headphone") || text.includes("earphone") || text.includes("earbud") || text.includes("buds") || text.includes("solo") || text.includes("studio") || text.includes("flex") || text.includes("fit"));
+
+      if (isAppleAudio && !text.includes("case") && !text.includes("cushion") && !text.includes("tip")) {
+        if (p < 500) return { term: "24M", upfront: 79, monthly: null };
+        return { term: "24M", upfront: 129, monthly: null };
+      }
+
+      // 2. Non-Apple / Non-Beats Headphones & Earphones (Table 2b - 24M Upfront only)
+      const isNonAppleAudio = (
+        text.includes("headphone") || text.includes("earphone") || text.includes("earbuds") ||
+        text.includes("true wireless") || text.includes("open ear") || text.includes("openrun") ||
+        text.includes("quietcomfort") || text.includes("linkbuds")
+      );
+
+      if (isNonAppleAudio && !text.includes("case") && !text.includes("cushion") && !text.includes("cable") && !text.includes("stand") && !text.includes("adapter")) {
+        if (p < 249) return { term: "24M", upfront: 29, monthly: null };
+        if (p < 500) return { term: "24M", upfront: 59, monthly: null };
+        return { term: "24M", upfront: 99, monthly: null };
+      }
+
+      // 3. For all other hardware, constrain strictly to Primary items
+      if (!isPrimary) return null;
+
+      // iPhones (Table 2a)
       if (text.includes("iphone") && !text.includes("case") && !text.includes("cable")) {
         if (p < 1000) return { term: "24M", upfront: 199, monthly: 9.99 };
         if (p < 2000) return { term: "24M", upfront: 299, monthly: 14.99 };
         return { term: "24M", upfront: 349, monthly: 17.99 };
       }
 
+      // iPads (Table 2a)
       if (text.includes("ipad") && !text.includes("case") && !text.includes("cover") && !text.includes("keyboard")) {
         if (p < 1000) return { term: "24M", upfront: 139, monthly: 6.99 };
         if (p < 2000) return { term: "24M", upfront: 239, monthly: 10.99 };
         return { term: "24M", upfront: 269, monthly: 13.99 };
       }
 
+      // MacBooks (Table 2a)
       if (text.includes("macbook") && !text.includes("sleeve") && !text.includes("shell") && !text.includes("bag")) {
         if (p < 2000) return { term: "36M", upfront: 389, monthly: null };
         if (p < 3000) return { term: "36M", upfront: 489, monthly: null };
         return { term: "36M", upfront: 589, monthly: null };
       }
 
+      // iMac, Mac mini, Mac Studio (Table 2a)
       if (text.includes("imac") || text.includes("mac mini") || text.includes("mac studio")) {
         if (p < 2000) return { term: "36M", upfront: 189, monthly: null };
         if (p < 3000) return { term: "36M", upfront: 289, monthly: null };
         return { term: "36M", upfront: 489, monthly: null };
       }
 
+      // Android and Non-Apple Smartphones (Table 2b)
       const isSmartphone = (
         text.includes("galaxy s") || text.includes("galaxy z") || text.includes("galaxy a") || 
         text.includes("pixel ") || text.includes("motorola") || text.includes("oppo") ||
@@ -1302,6 +1339,7 @@
         return { term: "24M", upfront: 349, monthly: 17.99 };
       }
 
+      // Tablets Non-Apple (Table 2b)
       if (text.includes("tablet") || text.includes("galaxy tab") || text.includes("lenovo tab")) {
         if (!text.includes("case") && !text.includes("screen") && !text.includes("cover")) {
           if (p < 250) return { term: "24M", upfront: 49, monthly: null };
@@ -1312,6 +1350,7 @@
         }
       }
 
+      // Windows & Chrome OS Laptops (Table 2b)
       if (text.includes("laptop") || text.includes("chromebook") || text.includes("ideapad") || text.includes("zenbook") || text.includes("omnibook") || text.includes("vivobook")) {
         if (!text.includes("bag") && !text.includes("sleeve") && !text.includes("stand")) {
           if (p < 1000) return { term: "36M", upfront: 279, monthly: null };
@@ -1321,6 +1360,7 @@
         }
       }
 
+      // Portable Gaming Consoles (Table 2b)
       if (text.includes("switch") || text.includes("switch 2") || text.includes("portal") || text.includes("steam deck") || text.includes("rog ally") || text.includes("claw")) {
         if (text.includes("console") || text.includes("handheld") || text.includes("player")) {
           if (p < 500) return { term: "24M", upfront: 109, monthly: null };
@@ -1342,6 +1382,7 @@
       pendingExtrasTargetId = targetItemId;
       pendingExtrasPlans = planInfo;
 
+      // If only upfront is available (such as headphones and MacBooks), apply immediately
       if (!planInfo.monthly) {
         applyExtrasPlan(false);
         return;
@@ -1751,12 +1792,14 @@
             </td>
           `;
         } else {
+          // Extra Care Button
           const careBtnHtml = !item.hasExtraCare && item.unitPrice > 0 ? `
             <button class="btn-care" onclick="attachExtraCare(${item.id})" title="Attach Extra Care">
               🛡️ + Care
             </button>
           ` : (item.hasExtraCare ? `<span style="font-size: 0.72rem; color: #60a5fa; font-weight: 800; background: rgba(59,130,246,0.15); padding: 4px 6px; border-radius: 4px;">🛡️ Covered</span>` : "");
 
+          // JB Hi-Fi Extras Button (Displays on Primary items + Headphones/Earbuds)
           const extrasEligible = getExtrasOptions(item);
           let extrasBtnHtml = "";
           if (extrasEligible && !item.hasExtras) {
